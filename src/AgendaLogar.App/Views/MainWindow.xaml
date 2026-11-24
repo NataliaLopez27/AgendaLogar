@@ -1,0 +1,25 @@
+<Window x:Class="AgendaLogar.App.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:AgendaLogar.Presentacion.ViewModels;assembly=AgendaLogar.Presentacion"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance Type=vm:MainViewModel}"
+        Title="{Binding Titulo}"
+        Width="1100" Height="700" MinWidth="800" MinHeight="500"
+        WindowStartupLocation="CenterScreen">
+    <DockPanel>
+        <!-- Menú lateral -->
+        <Border DockPanel.Dock="Left" Width="220" Background="#F3F4F6" Padding="12">
+            <StackPanel>
+                <TextBlock Text="AgendaLogar" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,16" />
+                <Button Content="Inicio" Command="{Binding IrAInicioCommand}" Style="{StaticResource BotonMenu}" />
+                <Button Content="Modelos fiscales" Command="{Binding IrACatalogoModelosCommand}" Style="{StaticResource BotonMenu}" />
+            </StackPanel>
+        </Border>
+
+        <!-- Vista actual (se elige por DataTemplate en App.xaml) -->
+        <ContentControl Content="{Binding VistaActual}" Margin="16" />
+    </DockPanel>
+</Window>
