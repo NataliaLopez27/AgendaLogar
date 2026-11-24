@@ -107,7 +107,14 @@ Los modelos se guardan en una tabla configurable, de modo que se pueden añadir 
 - **RF-15** El empleado puede corregir el importe o volver a un estado anterior mientras el periodo esté abierto.
 - **RF-15b** Solo existen tres estados: *Pendiente*, *Hecho* y *Listo para mandar*. En el listado se ven de un vistazo, por ejemplo con colores.
 - **RF-16** El empleado puede añadir una **observación** al cliente en el periodo.
-- **RF-17** El empleado ve su progreso, por ejemplo "45 de 67 listos para mandar", y puede filtrar por estado y buscar por nombre.
+- **RF-17** El empleado ve su progreso, por ejemplo "45 de 67 listos para mandar", y puede buscar por nombre.
+- **RF-18** **Filtro de pendientes.** En cualquier listado (Trimestral o Anual, Personas físicas o Sociedades) el empleado puede filtrar por estado:
+  - **Pendientes de hacer**: clientes en estado *Pendiente*.
+  - **Hechos, sin mandar**: clientes en estado *Hecho* que aún no están *Listos para mandar*.
+  - **Listos para mandar**.
+  - **Todos**: es la opción por defecto.
+
+  Junto a cada filtro se muestra cuántos clientes hay, por ejemplo "Pendientes (12)". El filtro se puede combinar con la búsqueda por nombre.
 
 ### 4.3 Gestión de clientes (administrador)
 
@@ -155,7 +162,8 @@ Los modelos se guardan en una tabla configurable, de modo que se pueden añadir 
 ### 4.6 Seguimiento e informes (administrador)
 
 - **RF-50** Panel con el progreso de cada empleado en el periodo: pendientes, hechos, listos para mandar y porcentaje.
-- **RF-51** Ver el detalle de cualquier empleado, con la misma vista que tiene él.
+- **RF-51** Ver el detalle de cualquier empleado, con la misma vista que tiene él, incluidos los filtros de RF-18.
+- **RF-51b** Ver todos los clientes **pendientes de hacer** de un periodo, de todos los empleados a la vez, con una columna que indica a qué empleado pertenece cada uno. También se pueden filtrar por empleado y por tipo de cliente.
 - **RF-52** Ver el histórico de un cliente: todos sus periodos, con estado, importe y empleado.
 - **RF-53** *(Deseable)* Exportar un periodo a Excel.
 
@@ -249,7 +257,7 @@ HistorialAsignacion (asignacion_id, campo, valor_anterior, valor_nuevo,
   1. El empleado abre **Trimestral**. Por defecto se muestra el periodo en curso.
   2. Elige la pestaña **Personas físicas** o **Sociedades**.
   3. El sistema muestra sus clientes asignados, con los modelos que les corresponden, su estado (Pendiente / Hecho / Listo para mandar) y su importe.
-  4. Puede cambiar de periodo, buscar por nombre y filtrar por estado.
+  4. Puede cambiar de periodo, buscar por nombre y filtrar por estado, por ejemplo **"Pendientes de hacer"** para ver solo los clientes que le faltan (RF-18).
 - **Alternativo:** si no tiene nada asignado en ese periodo, se muestra un mensaje informativo.
 
 ### CU-04 Ver mis asignaciones anuales
@@ -322,7 +330,7 @@ HistorialAsignacion (asignacion_id, campo, valor_anterior, valor_nuevo,
 
 ### CU-18 Panel de seguimiento
 - **Actor:** Administrador
-- **Flujo:** muestra, por empleado, los pendientes, los hechos, los listos para mandar y el porcentaje en el periodo elegido. Se puede entrar al detalle de cada empleado.
+- **Flujo:** muestra, por empleado, los pendientes, los hechos, los listos para mandar y el porcentaje en el periodo elegido. Se puede entrar al detalle de cada empleado, o pulsar en el número de pendientes para ver la lista de clientes pendientes (RF-51b).
 
 ### CU-19 Histórico de cliente
 - **Actor:** Administrador
@@ -367,10 +375,10 @@ HistorialAsignacion (asignacion_id, campo, valor_anterior, valor_nuevo,
 20. CU-04 Vista anual.
 21. CU-05 / CU-06 Ficha del cliente: Hecho, Listo para mandar e importe.
 22. CU-07 Observaciones.
-23. RF-17 Progreso, filtros y búsqueda.
+23. RF-17 / RF-18 Progreso, búsqueda y filtro de pendientes de hacer.
 
 ### Hito 5 — Seguimiento
-24. CU-18 Panel de administrador.
+24. CU-18 Panel de administrador y listado global de pendientes (RF-51b).
 25. CU-19 Histórico de cliente.
 26. RNF-05 Registro de cambios (auditoría).
 
