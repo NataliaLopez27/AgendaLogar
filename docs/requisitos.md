@@ -1,7 +1,7 @@
 # AgendaLogar — Requisitos y casos de uso
 
-> Versión 0.3 (borrador) · Noviembre 2026
-> Estado: pendiente de revisión. Las suposiciones están marcadas con **[S]** y las dudas abiertas están en la sección 10.
+> Versión 1.0 · Noviembre 2026
+> Estado: **cerrado**. Todas las decisiones están recogidas en la sección 9.
 
 ---
 
@@ -404,7 +404,4 @@ HistorialAsignacion (asignacion_id, campo, valor_anterior, valor_nuevo,
 | 7 | ¿Qué base de datos? | **SQL Server**, en su versión **Express** (gratuita): admite bases de datos de hasta 10 GB, mucho más de lo que hace falta. Se accede con Entity Framework Core. |
 | 8 | ¿Dónde se aloja la base de datos? | **En la nube, en Azure SQL Database**, para no tener que instalar SQL Server en ningún PC de la oficina. Se usa la oferta gratuita de Azure SQL mientras alcance, y si no, el nivel más bajo de pago. Durante el desarrollo se usa LocalDB. |
 | 9 | ¿Los modelos 200 y 202 salen en todos los trimestres? | **Sí**, igual que en los Excel actuales. Se revisará con el cliente más adelante. Como los modelos son configurables (sección 3), se puede cambiar sin tocar el código. |
-
-## 10. Dudas abiertas
-
-1. **Instalación en los PCs:** una aplicación WPF siempre hay que instalarla en cada PC. Con ClickOnce basta un enlace o una carpeta compartida: se instala con un clic la primera vez y después se actualiza sola. ¿Es suficiente, o el objetivo es que no haya que instalar **nada** en ningún PC? En ese caso habría que replantear el proyecto como aplicación web.
+| 10 | ¿Cómo se instala en los PCs? | La aplicación WPF **se instala en cada PC** con ClickOnce, desde un enlace o una carpeta compartida, y se actualiza sola. No hay que instalar nada más: la base de datos está en Azure. |
