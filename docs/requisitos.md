@@ -110,11 +110,30 @@ Los modelos se guardan en una tabla configurable, de modo que se pueden añadir 
 
 - **RF-20** Dar de alta un cliente: nombre o razón social, NIF/CIF, tipo (física o sociedad), fecha de alta y notas.
 - **RF-21** Editar los datos de un cliente.
-- **RF-22** Dar de **baja** a un cliente con fecha de baja. El cliente no se borra, para conservar el histórico, y deja de aparecer en los periodos posteriores a esa fecha.
+- **RF-22** Dar de **baja** a un cliente con fecha de baja. El cliente no se borra, para conservar el histórico. Se aplica la **regla de vigencia** (RN-01): sigue apareciendo en el periodo que contiene la fecha de baja y desaparece de los siguientes.
 - **RF-23** Reactivar a un cliente dado de baja.
 - **RF-24** Configurar qué **modelos** lleva cada cliente, cada uno con su **fecha de alta y de baja** (por ejemplo, "baja en IVA el 31-3-25").
 - **RF-25** Listar y buscar clientes, filtrando por tipo, estado y empleado habitual.
 - **RF-26** Eliminar definitivamente un cliente, solo si no tiene presentaciones registradas.
+
+### 4.3.1 Reglas de negocio: vigencia de clientes y modelos
+
+- **RN-01 Vigencia en un periodo.** Un cliente entra en un periodo si ha estado de alta **al menos un día** dentro de ese periodo:
+
+  `fecha_alta ≤ fin_periodo` **y** (`fecha_baja` vacía **o** `fecha_baja ≥ inicio_periodo`)
+
+  - Trimestres: 1T = 1 ene – 31 mar, 2T = 1 abr – 30 jun, 3T = 1 jul – 30 sep, 4T = 1 oct – 31 dic.
+  - Anual: 1 ene – 31 dic.
+- **RN-02** La misma regla se aplica a **cada modelo** del cliente, según sus fechas de alta y baja en ese modelo (por ejemplo, "baja IVA 31-3-25": el 303 aparece en el 1T 2025 y ya no en el 2T).
+- **RN-03 Baja en un periodo ya creado.** Si el administrador da de baja a un cliente con fecha dentro de un periodo ya creado, el cliente **no se quita** de ese periodo: sigue asignado y pendiente de hacer. En el periodo siguiente ya no aparece, salvo que antes se le haya vuelto a dar de alta.
+- **RN-04 Alta en un periodo ya creado.** Si se da de alta a un cliente con fecha dentro de un periodo ya creado y abierto, el sistema propone añadirlo a ese periodo y asignarlo a un empleado.
+- **RN-05** En las pantallas de asignación **solo aparecen los clientes vigentes** del periodo según RN-01. Los clientes que se dieron de baja dentro del periodo se muestran con una etiqueta "Baja dd/mm/aaaa", para que se sepa que es su último periodo.
+
+**Ejemplo:** el administrador da de baja a un cliente el 24-11-2026.
+- 4T 2026 (1 oct – 31 dic): **sí aparece**, porque ha estado de alta parte del trimestre.
+- 1T 2027: **no aparece**, salvo que se reactive antes.
+- Anual 2026: **sí aparece**.
+- Anual 2027: **no aparece**.
 
 ### 4.4 Gestión de empleados (administrador)
 
@@ -124,10 +143,10 @@ Los modelos se guardan en una tabla configurable, de modo que se pueden añadir 
 ### 4.5 Periodos y asignaciones (administrador)
 
 - **RF-40** Crear un **periodo trimestral** (año + trimestre) o un **periodo anual** (año).
-- **RF-41** Al crear un periodo, ofrecer **copiar las asignaciones del periodo anterior** del mismo tipo. Los clientes dados de baja se excluyen y los clientes nuevos quedan "sin asignar".
+- **RF-41** Al crear un periodo, ofrecer **copiar las asignaciones del periodo anterior** del mismo tipo. Solo se incluyen los clientes vigentes según RN-01: los que no están vigentes en el nuevo periodo se excluyen y los clientes nuevos quedan "sin asignar".
 - **RF-42** Asignar y reasignar clientes a empleados, uno a uno o varios a la vez.
 - **RF-43** Ver los clientes **sin asignar** de un periodo.
-- **RF-44** Al crear un periodo, el sistema genera las presentaciones pendientes de cada cliente según los modelos que tenga activos en ese periodo.
+- **RF-44** Al crear un periodo, el sistema genera las presentaciones pendientes de cada cliente vigente, según los modelos vigentes en ese periodo (RN-01, RN-02).
 - **RF-45** **Cerrar** un periodo. A partir de ahí queda en solo lectura para los empleados, y el administrador puede reabrirlo.
 
 ### 4.6 Seguimiento e informes (administrador)
@@ -160,7 +179,9 @@ Los modelos se guardan en una tabla configurable, de modo que se pueden añadir 
 ```
 Usuario (id, nombre, usuario, hash_password, rol, activo)
 
-Cliente (id, nombre, nif, tipo[FISICA|SOCIEDAD], fecha_alta, fecha_baja, notas)
+Cliente (id, nombre, nif, tipo[FISICA|SOCIEDAD], notas)
+
+AltaCliente (cliente_id, fecha_alta, fecha_baja)   -- historial; permite bajas y reactivaciones
 
 Modelo (codigo, descripcion, periodicidad[TRIMESTRAL|ANUAL],
         aplica_fisica, aplica_sociedad, orden)
@@ -267,7 +288,8 @@ Presentacion (id, periodo_id, cliente_id, modelo_codigo,
 
 ### CU-13 Dar de baja o reactivar cliente
 - **Actor:** Administrador
-- **Flujo:** indica la fecha de baja. El cliente deja de generarse en los periodos posteriores, pero su histórico se conserva. Para reactivarlo se borra la fecha de baja.
+- **Flujo:** indica la fecha de baja. El cliente se mantiene en el periodo que contiene esa fecha (RN-03) y deja de aparecer en los siguientes. Su histórico se conserva.
+- **Reactivar:** se registra una nueva fecha de alta y el cliente vuelve a aparecer desde el periodo que la contiene. **[S]** Se guarda el historial de altas y bajas, porque un cliente puede darse de baja y volver más tarde.
 
 ### CU-14 Configurar modelos de un cliente
 - **Actor:** Administrador
@@ -277,8 +299,8 @@ Presentacion (id, periodo_id, cliente_id, modelo_codigo,
 - **Actor:** Administrador
 - **Flujo principal:**
   1. Elige el tipo (trimestral o anual), el año y, si es trimestral, el trimestre.
-  2. El sistema propone **copiar las asignaciones** del periodo anterior del mismo tipo.
-  3. El sistema genera las presentaciones pendientes según los modelos activos de cada cliente.
+  2. El sistema calcula los **clientes vigentes** del periodo (RN-01) y propone **copiar las asignaciones** del periodo anterior del mismo tipo.
+  3. El sistema genera las presentaciones pendientes según los modelos vigentes de cada cliente (RN-02).
   4. Muestra un resumen: clientes asignados, sin asignar y dados de baja desde el periodo anterior.
 - **Alternativo:** si el periodo ya existe, se muestra un error.
 
@@ -326,26 +348,27 @@ Presentacion (id, periodo_id, cliente_id, modelo_codigo,
 13. RF-60 Script de importación desde los Excel actuales.
 
 ### Hito 3 — Periodos y asignaciones
-14. CU-15 Crear periodo y generar presentaciones.
-15. RF-41 Copiar asignaciones del periodo anterior.
-16. CU-16 Asignación individual y masiva.
-17. CU-17 Cerrar y reabrir periodo.
+14. RN-01…RN-05 Cálculo de vigencia de clientes y modelos por periodo, con tests de los casos límite.
+15. CU-15 Crear periodo y generar presentaciones.
+16. RF-41 Copiar asignaciones del periodo anterior.
+17. CU-16 Asignación individual y masiva.
+18. CU-17 Cerrar y reabrir periodo.
 
 ### Hito 4 — Vista del empleado
-18. CU-03 Vista trimestral (pestañas físicas/sociedades).
-19. CU-04 Vista anual.
-20. CU-05 / CU-06 Ficha del cliente: Hecho, Listo para mandar e importe.
-21. CU-07 Observaciones.
-22. RF-17 Progreso, filtros y búsqueda.
+19. CU-03 Vista trimestral (pestañas físicas/sociedades).
+20. CU-04 Vista anual.
+21. CU-05 / CU-06 Ficha del cliente: Hecho, Listo para mandar e importe.
+22. CU-07 Observaciones.
+23. RF-17 Progreso, filtros y búsqueda.
 
 ### Hito 5 — Seguimiento
-23. CU-18 Panel de administrador.
-24. CU-19 Histórico de cliente.
-25. RNF-05 Registro de cambios (auditoría).
+24. CU-18 Panel de administrador.
+25. CU-19 Histórico de cliente.
+26. RNF-05 Registro de cambios (auditoría).
 
 ### Hito 6 — Extras y despliegue
-26. CU-20 Exportar a Excel.
-27. Despliegue, HTTPS y copias de seguridad.
+27. CU-20 Exportar a Excel.
+28. Despliegue, HTTPS y copias de seguridad.
 
 ---
 
