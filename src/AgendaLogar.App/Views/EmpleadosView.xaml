@@ -1,0 +1,130 @@
+<UserControl x:Class="AgendaLogar.App.Views.EmpleadosView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:AgendaLogar.Presentacion.ViewModels;assembly=AgendaLogar.Presentacion"
+             mc:Ignorable="d" d:DesignWidth="950" d:DesignHeight="700"
+             d:DataContext="{d:DesignInstance Type=vm:EmpleadosViewModel}">
+    <Grid Margin="40,32">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Cabecera -->
+        <DockPanel Grid.ColumnSpan="2">
+            <Button DockPanel.Dock="Right" Content="+  Nuevo empleado" Command="{Binding NuevoCommand}"
+                    Style="{StaticResource BotonPrimario}" VerticalAlignment="Center" />
+            <StackPanel>
+                <TextBlock Text="Empleados" Style="{StaticResource TituloPagina}" />
+                <TextBlock Text="Crea usuarios, cambia su rol, desactívalos o restablece su contraseña."
+                           Style="{StaticResource Subtitulo}" />
+            </StackPanel>
+        </DockPanel>
+
+        <!-- Avisos -->
+        <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Margin="0,8,0,8">
+            <Border Style="{StaticResource CajaError}"
+                    Visibility="{Binding Error, Converter={StaticResource TextoAVisibilidad}}">
+                <TextBlock Text="{Binding Error}" Foreground="{StaticResource Error}" TextWrapping="Wrap" />
+            </Border>
+            <Border Style="{StaticResource CajaError}" Background="{StaticResource TurquesaClaro}"
+                    Visibility="{Binding Aviso, Converter={StaticResource TextoAVisibilidad}}">
+                <TextBox Text="{Binding Aviso, Mode=OneWay}" IsReadOnly="True" BorderThickness="0" Padding="0"
+                         Background="Transparent" Foreground="{StaticResource TurquesaOscuro}" TextWrapping="Wrap" />
+            </Border>
+            <CheckBox Content="Mostrar desactivados" IsChecked="{Binding MostrarDesactivados}" Margin="0,12,0,0" />
+        </StackPanel>
+
+        <!-- Listado -->
+        <DataGrid Grid.Row="2" ItemsSource="{Binding Usuarios}" SelectedItem="{Binding Seleccionado}">
+            <DataGrid.InputBindings>
+                <MouseBinding Gesture="LeftDoubleClick" Command="{Binding EditarCommand}" />
+            </DataGrid.InputBindings>
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Nombre" Binding="{Binding Nombre}" Width="*" />
+                <DataGridTextColumn Header="Usuario" Binding="{Binding NombreUsuario}" Width="150" />
+                <DataGridTemplateColumn Header="Rol" Width="140">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Border Style="{StaticResource Pastilla}">
+                                <TextBlock Text="{Binding RolTexto}" FontSize="12" Foreground="{StaticResource TurquesaOscuro}" />
+                            </Border>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Estado" Width="120">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock x:Name="Estado" Text="{Binding EstadoTexto}" Foreground="{StaticResource Exito}" />
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding Activo}" Value="False">
+                                    <Setter TargetName="Estado" Property="Foreground" Value="{StaticResource Gris}" />
+                                </DataTrigger>
+                            </DataTemplate.Triggers>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridCheckBoxColumn Header="Debe cambiar contraseña" Binding="{Binding DebeCambiarPassword}" Width="180" />
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- Acciones sobre el seleccionado -->
+        <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,16,0,0">
+            <Button Content="Editar" Command="{Binding EditarCommand}" Style="{StaticResource BotonSecundario}" Margin="0,0,10,0" />
+            <Button Content="Restablecer contraseña" Command="{Binding RestablecerPasswordCommand}" Style="{StaticResource BotonSecundario}" Margin="0,0,10,0" />
+            <Button Content="Reactivar" Command="{Binding ReactivarCommand}" Style="{StaticResource BotonSecundario}" Margin="0,0,10,0" />
+            <Button Content="Desactivar" Command="{Binding DesactivarCommand}" Style="{StaticResource BotonPeligro}" />
+        </StackPanel>
+
+        <!-- Panel lateral de alta / edición -->
+        <Border Grid.Row="2" Grid.Column="1" Grid.RowSpan="2" Width="340" Margin="24,0,0,0"
+                Style="{StaticResource Tarjeta}" VerticalAlignment="Top"
+                Visibility="{Binding EditorVisible, Converter={StaticResource BoolAVisibilidad}}">
+            <StackPanel>
+                <Border Height="4" CornerRadius="2" Background="{StaticResource Turquesa}" Margin="-24,-24,-24,20" />
+                <TextBlock Text="{Binding TituloEditor}" FontSize="20" FontWeight="SemiBold" Foreground="{StaticResource Negro}" />
+
+                <TextBlock Text="Nombre" Style="{StaticResource Etiqueta}" />
+                <TextBox Text="{Binding Nombre, UpdateSourceTrigger=PropertyChanged}" />
+
+                <TextBlock Text="Usuario" Style="{StaticResource Etiqueta}" />
+                <TextBox Text="{Binding NombreUsuario, UpdateSourceTrigger=PropertyChanged}" />
+
+                <TextBlock Text="Rol" Style="{StaticResource Etiqueta}" />
+                <ComboBox ItemsSource="{Binding Roles}" DisplayMemberPath="Texto" SelectedValuePath="Valor"
+                          SelectedValue="{Binding Rol}" />
+
+                <StackPanel Visibility="{Binding EsAlta, Converter={StaticResource BoolAVisibilidad}}">
+                    <TextBlock Text="Contraseña inicial" Style="{StaticResource Etiqueta}" />
+                    <DockPanel>
+                        <Button DockPanel.Dock="Right" Content="Generar" Command="{Binding GenerarPasswordCommand}"
+                                Style="{StaticResource BotonSecundario}" Padding="12,8" Margin="8,0,0,0" />
+                        <TextBox Text="{Binding PasswordInicial, UpdateSourceTrigger=PropertyChanged}" FontFamily="Consolas" />
+                    </DockPanel>
+                    <TextBlock Text="{Binding RequisitosPassword}" FontSize="12" Foreground="{StaticResource Gris}"
+                               Margin="0,6,0,0" TextWrapping="Wrap" />
+                    <TextBlock Text="Tendrá que cambiarla la primera vez que entre." FontSize="12"
+                               Foreground="{StaticResource Gris}" TextWrapping="Wrap" />
+                </StackPanel>
+
+                <Border Style="{StaticResource CajaError}"
+                        Visibility="{Binding ErrorEditor, Converter={StaticResource TextoAVisibilidad}}">
+                    <TextBlock Text="{Binding ErrorEditor}" Foreground="{StaticResource Error}" TextWrapping="Wrap" />
+                </Border>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+                    <Button Content="Cancelar" Command="{Binding CancelarEditorCommand}" Style="{StaticResource BotonSecundario}" Margin="0,0,10,0" />
+                    <Button Content="Guardar" Command="{Binding GuardarEditorCommand}" Style="{StaticResource BotonPrimario}" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

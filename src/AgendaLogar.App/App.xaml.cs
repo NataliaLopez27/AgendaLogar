@@ -5,6 +5,7 @@ using AgendaLogar.App.Views;
 using AgendaLogar.Core.Datos;
 using AgendaLogar.Core.Seguridad;
 using AgendaLogar.Core.Servicios;
+using AgendaLogar.App.Servicios;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,8 +25,6 @@ public partial class App : Application
             .Build();
     }
 
-    public static IServiceProvider Servicios => ((App)Current)._host.Services;
-
     private static void RegistrarServicios(IConfiguration configuracion, IServiceCollection servicios)
     {
         var cadena = configuracion.GetConnectionString("AgendaLogar")
@@ -42,9 +41,11 @@ public partial class App : Application
         servicios.AddSingleton<ISesion, Sesion>();
         servicios.AddSingleton<ControlAcceso>();
         servicios.AddSingleton<ServicioAutenticacion>();
+        servicios.AddSingleton<ServicioUsuarios>();
 
         // Navegación
         servicios.AddSingleton<INavegacionService, NavegacionService>();
+        servicios.AddSingleton<IDialogos, DialogosWpf>();
         servicios.AddSingleton<Func<Type, ViewModelBase>>(sp => tipo => (ViewModelBase)sp.GetRequiredService(tipo));
 
         // ViewModels y ventana principal
@@ -53,6 +54,7 @@ public partial class App : Application
         servicios.AddTransient<LoginViewModel>();
         servicios.AddTransient<InicioViewModel>();
         servicios.AddTransient<CambiarPasswordViewModel>();
+        servicios.AddTransient<EmpleadosViewModel>();
         servicios.AddTransient<CatalogoModelosViewModel>();
         servicios.AddSingleton<MainWindow>();
     }

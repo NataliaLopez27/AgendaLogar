@@ -58,6 +58,9 @@
 
                     <StackPanel x:Name="MenuAdmin" Visibility="{Binding EsAdmin, Converter={StaticResource BoolAVisibilidad}}">
                         <TextBlock Text="ADMINISTRACIÓN" Style="{StaticResource Etiqueta}" Margin="8,20,0,6" Foreground="{StaticResource Gris}" />
+                        <RadioButton Content="Empleados" Style="{StaticResource OpcionMenu}" GroupName="Menu"
+                                     Command="{Binding IrAEmpleadosCommand}"
+                                     IsChecked="{Binding SeccionActual, Mode=OneWay, Converter={StaticResource IgualA}, ConverterParameter=EmpleadosViewModel}" />
                         <RadioButton Content="Modelos fiscales" Style="{StaticResource OpcionMenu}" GroupName="Menu"
                                      Command="{Binding IrACatalogoModelosCommand}"
                                      IsChecked="{Binding SeccionActual, Mode=OneWay, Converter={StaticResource IgualA}, ConverterParameter=CatalogoModelosViewModel}" />
