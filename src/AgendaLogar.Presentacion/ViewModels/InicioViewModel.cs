@@ -1,39 +1,19 @@
-using AgendaLogar.Core.Datos;
-using CommunityToolkit.Mvvm.Input;
+using AgendaLogar.Core.Seguridad;
 
 namespace AgendaLogar.Presentacion.ViewModels;
 
-/// <summary>Pantalla inicial: conecta con la base de datos y aplica las migraciones (RNF-03c).</summary>
-public partial class InicioViewModel : ViewModelBase
+/// <summary>
+/// Pantalla de inicio tras iniciar sesión. En el hito 4 será "Mis asignaciones · Trimestral" (CU-01, paso 3).
+/// </summary>
+public class InicioViewModel : ViewModelBase
 {
-    private readonly InicializadorBaseDatos _inicializador;
-    private readonly bool _aplicarMigraciones;
-
-    public InicioViewModel(InicializadorBaseDatos inicializador, OpcionesBaseDatos opciones)
+    public InicioViewModel(ISesion sesion)
     {
-        _inicializador = inicializador;
-        _aplicarMigraciones = opciones.AplicarMigracionesAlIniciar;
+        var usuario = sesion.Usuario;
+        Saludo = usuario is null ? "Hola" : $"Hola, {usuario.Nombre}";
+        Rol = usuario?.EsAdmin == true ? "Administrador" : "Empleado";
     }
 
-    public override Task AlEntrarAsync() => ConectarAsync();
-
-    [RelayCommand]
-    private async Task ConectarAsync()
-    {
-        Ocupado = true;
-        Mensaje = "Conectando…";
-        try
-        {
-            await _inicializador.InicializarAsync(_aplicarMigraciones);
-            Mensaje = "Conectado a la base de datos.";
-        }
-        catch (Exception ex)
-        {
-            Mensaje = $"No se ha podido conectar con la base de datos: {ex.GetBaseException().Message}";
-        }
-        finally
-        {
-            Ocupado = false;
-        }
-    }
+    public string Saludo { get; }
+    public string Rol { get; }
 }

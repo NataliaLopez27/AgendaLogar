@@ -15,5 +15,11 @@ public class Usuario
     public Rol Rol { get; set; } = Rol.Empleado;
     public bool Activo { get; set; } = true;
 
+    /// <summary>
+    /// Obliga a cambiar la contraseña en el próximo inicio de sesión
+    /// (usuario nuevo o contraseña restablecida por el administrador).
+    /// </summary>
+    public bool DebeCambiarPassword { get; set; }
+
     public ICollection<Asignacion> Asignaciones { get; set; } = new List<Asignacion>();
 }

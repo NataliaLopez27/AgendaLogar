@@ -6,18 +6,17 @@
              xmlns:vm="clr-namespace:AgendaLogar.Presentacion.ViewModels;assembly=AgendaLogar.Presentacion"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance Type=vm:CatalogoModelosViewModel}">
-    <DockPanel>
-        <TextBlock DockPanel.Dock="Top" Text="Modelos fiscales" FontSize="24" FontWeight="SemiBold" Margin="0,0,0,8" />
-        <TextBlock DockPanel.Dock="Top" Text="{Binding Mensaje}" Margin="0,0,0,8" />
-        <DataGrid ItemsSource="{Binding Modelos}" AutoGenerateColumns="False" IsReadOnly="True"
-                  HeadersVisibility="Column" CanUserAddRows="False">
+    <DockPanel Margin="40,32">
+        <TextBlock DockPanel.Dock="Top" Text="Modelos fiscales" Style="{StaticResource TituloPagina}" />
+        <TextBlock DockPanel.Dock="Top" Text="{Binding Mensaje}" Style="{StaticResource Subtitulo}" Margin="0,0,0,16" />
+        <DataGrid ItemsSource="{Binding Modelos}">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Modelo" Binding="{Binding Codigo}" />
+                <DataGridTextColumn Header="Modelo" Binding="{Binding Codigo}" Width="90" />
                 <DataGridTextColumn Header="Concepto" Binding="{Binding Descripcion}" Width="*" />
-                <DataGridTextColumn Header="Periodicidad" Binding="{Binding Periodicidad}" />
-                <DataGridTextColumn Header="Resume a" Binding="{Binding ResumeA}" />
-                <DataGridCheckBoxColumn Header="Físicas" Binding="{Binding AplicaFisica}" />
-                <DataGridCheckBoxColumn Header="Sociedades" Binding="{Binding AplicaSociedad}" />
+                <DataGridTextColumn Header="Periodicidad" Binding="{Binding Periodicidad}" Width="120" />
+                <DataGridTextColumn Header="Resume a" Binding="{Binding ResumeA}" Width="90" />
+                <DataGridCheckBoxColumn Header="Físicas" Binding="{Binding AplicaFisica}" Width="80" />
+                <DataGridCheckBoxColumn Header="Sociedades" Binding="{Binding AplicaSociedad}" Width="100" />
             </DataGrid.Columns>
         </DataGrid>
     </DockPanel>

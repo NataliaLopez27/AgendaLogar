@@ -3,6 +3,8 @@ using AgendaLogar.Presentacion.Navegacion;
 using AgendaLogar.Presentacion.ViewModels;
 using AgendaLogar.App.Views;
 using AgendaLogar.Core.Datos;
+using AgendaLogar.Core.Seguridad;
+using AgendaLogar.Core.Servicios;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -35,12 +37,19 @@ public partial class App : Application
         servicios.AddSingleton(configuracion.GetSection("BaseDatos").Get<OpcionesBaseDatos>() ?? new OpcionesBaseDatos());
         servicios.AddSingleton<InicializadorBaseDatos>();
 
+        // Seguridad y servicios de negocio
+        servicios.AddSingleton<IHashPassword, HashPasswordBCrypt>();
+        servicios.AddSingleton<ISesion, Sesion>();
+        servicios.AddSingleton<ServicioAutenticacion>();
+
         // Navegación
         servicios.AddSingleton<INavegacionService, NavegacionService>();
         servicios.AddSingleton<Func<Type, ViewModelBase>>(sp => tipo => (ViewModelBase)sp.GetRequiredService(tipo));
 
         // ViewModels y ventana principal
         servicios.AddSingleton<MainViewModel>();
+        servicios.AddTransient<ConexionViewModel>();
+        servicios.AddTransient<LoginViewModel>();
         servicios.AddTransient<InicioViewModel>();
         servicios.AddTransient<CatalogoModelosViewModel>();
         servicios.AddSingleton<MainWindow>();
@@ -53,7 +62,7 @@ public partial class App : Application
         var ventana = _host.Services.GetRequiredService<MainWindow>();
         ventana.Show();
 
-        _host.Services.GetRequiredService<INavegacionService>().NavegarA<InicioViewModel>();
+        _host.Services.GetRequiredService<INavegacionService>().NavegarA<ConexionViewModel>();
         base.OnStartup(e);
     }
 

@@ -1,3 +1,5 @@
+using AgendaLogar.Core.Dominio;
+using AgendaLogar.Core.Seguridad;
 using Microsoft.EntityFrameworkCore;
 
 namespace AgendaLogar.Core.Datos;
@@ -8,11 +10,17 @@ namespace AgendaLogar.Core.Datos;
 /// </summary>
 public class InicializadorBaseDatos
 {
-    private readonly IDbContextFactory<AgendaLogarDbContext> _fabrica;
+    /// <summary>Usuario y contraseña de la primera cuenta, que hay que cambiar al entrar.</summary>
+    public const string UsuarioAdminInicial = "admin";
+    public const string PasswordAdminInicial = "admin";
 
-    public InicializadorBaseDatos(IDbContextFactory<AgendaLogarDbContext> fabrica)
+    private readonly IDbContextFactory<AgendaLogarDbContext> _fabrica;
+    private readonly IHashPassword _hash;
+
+    public InicializadorBaseDatos(IDbContextFactory<AgendaLogarDbContext> fabrica, IHashPassword hash)
     {
         _fabrica = fabrica;
+        _hash = hash;
     }
 
     public async Task InicializarAsync(bool aplicarMigraciones, int intentos = 5,
@@ -29,6 +37,7 @@ public class InicializadorBaseDatos
                     await db.Database.MigrateAsync(ct);
                 else if (!await db.Database.CanConnectAsync(ct))
                     throw new InvalidOperationException("No se puede conectar con la base de datos.");
+                await CrearAdministradorInicialAsync(db, ct);
                 return;
             }
             catch (Exception) when (intento < intentos && !ct.IsCancellationRequested)
@@ -36,5 +45,26 @@ public class InicializadorBaseDatos
                 await Task.Delay(pausa, ct);
             }
         }
+    }
+
+    /// <summary>
+    /// Si no hay ningún usuario, crea la cuenta "admin" / "admin" con rol ADMIN
+    /// y obliga a cambiar la contraseña en el primer inicio de sesión.
+    /// </summary>
+    public async Task CrearAdministradorInicialAsync(AgendaLogarDbContext db, CancellationToken ct = default)
+    {
+        if (await db.Usuarios.AnyAsync(ct))
+            return;
+
+        db.Usuarios.Add(new Usuario
+        {
+            Nombre = "Administrador",
+            NombreUsuario = UsuarioAdminInicial,
+            HashPassword = _hash.Calcular(PasswordAdminInicial),
+            Rol = Rol.Admin,
+            Activo = true,
+            DebeCambiarPassword = true
+        });
+        await db.SaveChangesAsync(ct);
     }
 }

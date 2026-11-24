@@ -3,20 +3,32 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="clr-namespace:AgendaLogar.Presentacion.ViewModels;assembly=AgendaLogar.Presentacion"
              xmlns:v="clr-namespace:AgendaLogar.App.Views"
+             xmlns:conv="clr-namespace:AgendaLogar.App.Conversores"
              ShutdownMode="OnMainWindowClose">
     <Application.Resources>
-        <!-- Cada ViewModel se pinta con su vista: así funciona la navegación. -->
-        <DataTemplate DataType="{x:Type vm:InicioViewModel}">
-            <v:InicioView />
-        </DataTemplate>
-        <DataTemplate DataType="{x:Type vm:CatalogoModelosViewModel}">
-            <v:CatalogoModelosView />
-        </DataTemplate>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Tema/Colores.xaml" />
+                <ResourceDictionary Source="Tema/Estilos.xaml" />
+            </ResourceDictionary.MergedDictionaries>
 
-        <Style x:Key="BotonMenu" TargetType="Button">
-            <Setter Property="Margin" Value="0,0,0,6" />
-            <Setter Property="Padding" Value="12,8" />
-            <Setter Property="HorizontalContentAlignment" Value="Left" />
-        </Style>
+            <conv:BoolAVisibilidad x:Key="BoolAVisibilidad" />
+            <conv:TextoAVisibilidad x:Key="TextoAVisibilidad" />
+            <conv:IgualA x:Key="IgualA" />
+
+            <!-- Cada ViewModel se pinta con su vista: así funciona la navegación. -->
+            <DataTemplate DataType="{x:Type vm:ConexionViewModel}">
+                <v:ConexionView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:LoginViewModel}">
+                <v:LoginView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:InicioViewModel}">
+                <v:InicioView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:CatalogoModelosViewModel}">
+                <v:CatalogoModelosView />
+            </DataTemplate>
+        </ResourceDictionary>
     </Application.Resources>
 </Application>

@@ -4,22 +4,69 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="clr-namespace:AgendaLogar.Presentacion.ViewModels;assembly=AgendaLogar.Presentacion"
+        xmlns:c="clr-namespace:AgendaLogar.App.Controles"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=vm:MainViewModel}"
         Title="{Binding Titulo}"
-        Width="1100" Height="700" MinWidth="800" MinHeight="500"
-        WindowStartupLocation="CenterScreen">
+        Width="1200" Height="760" MinWidth="900" MinHeight="600"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource Fondo}"
+        FontFamily="{StaticResource FuenteTexto}">
     <DockPanel>
-        <!-- Menú lateral -->
-        <Border DockPanel.Dock="Left" Width="220" Background="#F3F4F6" Padding="12">
-            <StackPanel>
-                <TextBlock Text="AgendaLogar" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,16" />
-                <Button Content="Inicio" Command="{Binding IrAInicioCommand}" Style="{StaticResource BotonMenu}" />
-                <Button Content="Modelos fiscales" Command="{Binding IrACatalogoModelosCommand}" Style="{StaticResource BotonMenu}" />
-            </StackPanel>
+        <!-- Menú lateral (solo con sesión iniciada) -->
+        <Border DockPanel.Dock="Left" Width="250" Background="{StaticResource Blanco}"
+                BorderBrush="{StaticResource GrisLinea}" BorderThickness="0,0,1,0"
+                Visibility="{Binding MostrarMenu, Converter={StaticResource BoolAVisibilidad}}">
+            <DockPanel Margin="16,20">
+                <!-- Cabecera con el logo -->
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="4,0,0,24">
+                    <c:LogoMonograma Width="54" Height="54" />
+                    <StackPanel VerticalAlignment="Center" Margin="10,0,0,0">
+                        <TextBlock FontFamily="{StaticResource FuenteTitulo}" FontSize="19" Foreground="{StaticResource Negro}">
+                            <Run Text="L" /><Run Text="O" Foreground="{StaticResource Turquesa}" /><Run Text="GAR" />
+                        </TextBlock>
+                        <TextBlock Text="AgendaLogar" FontSize="11" Foreground="{StaticResource Gris}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Usuario conectado y acciones de sesión -->
+                <Border DockPanel.Dock="Bottom" BorderBrush="{StaticResource GrisLinea}" BorderThickness="0,1,0,0" Padding="4,16,4,0">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Border Width="38" Height="38" CornerRadius="19" Background="{StaticResource Turquesa}">
+                                <TextBlock Text="{Binding Iniciales}" Foreground="{StaticResource Blanco}" FontWeight="SemiBold"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding NombreUsuario}" FontWeight="SemiBold" Foreground="{StaticResource Negro}" />
+                                <TextBlock Text="{Binding RolUsuario}" FontSize="12" Foreground="{StaticResource Gris}" />
+                            </StackPanel>
+                        </StackPanel>
+                        <Button Content="Cambiar contraseña" Command="{Binding IrACambiarPasswordCommand}"
+                                Style="{StaticResource BotonEnlace}" Margin="0,12,0,0" />
+                        <Button Content="Cerrar sesión" Command="{Binding CerrarSesionCommand}"
+                                Style="{StaticResource BotonEnlace}" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Opciones -->
+                <StackPanel>
+                    <TextBlock Text="MI TRABAJO" Style="{StaticResource Etiqueta}" Margin="8,0,0,6" Foreground="{StaticResource Gris}" />
+                    <RadioButton Content="Inicio" Style="{StaticResource OpcionMenu}" GroupName="Menu"
+                                 Command="{Binding IrAInicioCommand}"
+                                 IsChecked="{Binding SeccionActual, Mode=OneWay, Converter={StaticResource IgualA}, ConverterParameter=InicioViewModel}" />
+
+                    <StackPanel x:Name="MenuAdmin" Visibility="{Binding EsAdmin, Converter={StaticResource BoolAVisibilidad}}">
+                        <TextBlock Text="ADMINISTRACIÓN" Style="{StaticResource Etiqueta}" Margin="8,20,0,6" Foreground="{StaticResource Gris}" />
+                        <RadioButton Content="Modelos fiscales" Style="{StaticResource OpcionMenu}" GroupName="Menu"
+                                     Command="{Binding IrACatalogoModelosCommand}"
+                                     IsChecked="{Binding SeccionActual, Mode=OneWay, Converter={StaticResource IgualA}, ConverterParameter=CatalogoModelosViewModel}" />
+                    </StackPanel>
+                </StackPanel>
+            </DockPanel>
         </Border>
 
         <!-- Vista actual (se elige por DataTemplate en App.xaml) -->
-        <ContentControl Content="{Binding VistaActual}" Margin="16" />
+        <ContentControl Content="{Binding VistaActual}" Focusable="False" />
     </DockPanel>
 </Window>

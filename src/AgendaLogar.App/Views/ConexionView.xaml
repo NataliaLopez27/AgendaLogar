@@ -1,0 +1,21 @@
+<UserControl x:Class="AgendaLogar.App.Views.ConexionView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:AgendaLogar.Presentacion.ViewModels;assembly=AgendaLogar.Presentacion"
+             xmlns:c="clr-namespace:AgendaLogar.App.Controles"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance Type=vm:ConexionViewModel}"
+             Background="{StaticResource Blanco}">
+    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Width="360">
+        <c:LogoLogar Height="300" Margin="0,0,0,32" />
+        <ProgressBar IsIndeterminate="True" Height="3" Foreground="{StaticResource Turquesa}"
+                     Background="{StaticResource TurquesaClaro}" BorderThickness="0"
+                     Visibility="{Binding Ocupado, Converter={StaticResource BoolAVisibilidad}}" />
+        <TextBlock Text="{Binding Mensaje}" Style="{StaticResource Subtitulo}" TextAlignment="Center" Margin="0,12,0,0" />
+        <Button Content="Reintentar" Command="{Binding ConectarCommand}" Style="{StaticResource BotonPrimario}"
+                HorizontalAlignment="Center" Margin="0,16,0,0"
+                Visibility="{Binding HayError, Converter={StaticResource BoolAVisibilidad}}" />
+    </StackPanel>
+</UserControl>

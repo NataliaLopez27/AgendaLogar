@@ -411,6 +411,9 @@ namespace AgendaLogar.Core.Datos.Migraciones
                     b.Property<bool>("Activo")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("DebeCambiarPassword")
+                        .HasColumnType("bit");
+
                     b.Property<string>("HashPassword")
                         .IsRequired()
                         .HasMaxLength(100)
