@@ -176,8 +176,10 @@ Los modelos se guardan en una tabla configurable, de modo que se pueden añadir 
 ## 5. Requisitos no funcionales
 
 - **RNF-01** Aplicación de **escritorio para Windows**, desarrollada en **C# con WPF (.NET 8)** en Visual Studio, con la interfaz en español.
-- **RNF-02** **Base de datos compartida en SQL Server (Express):** todos los puestos (los 4 empleados) trabajan contra la misma base de datos, de modo que lo que asigna el administrador lo ve el empleado al momento.
-- **RNF-03** Contraseñas guardadas con hash seguro (BCrypt). Las conexiones a la base de datos van cifradas cuando salen de la red local.
+- **RNF-02** **Base de datos compartida en Azure SQL Database (SQL Server en la nube):** todos los puestos (los 4 empleados) trabajan contra la misma base de datos, de modo que lo que asigna el administrador lo ve el empleado al momento.
+- **RNF-03** Contraseñas de la aplicación guardadas con hash seguro (BCrypt). Las conexiones a Azure SQL van siempre cifradas (`Encrypt=True`).
+- **RNF-03b** El **cortafuegos de Azure SQL** solo admite conexiones desde la IP pública de la oficina y desde la del desarrollador. El usuario de base de datos que usa la aplicación tiene solo los permisos necesarios: no es administrador del servidor.
+- **RNF-03c** Si la base de datos de Azure está en pausa (nivel *serverless*), la primera conexión del día puede tardar unos segundos. La aplicación muestra un mensaje "Conectando…" y reintenta la conexión en lugar de dar error.
 - **RNF-04b** Control de acceso: un empleado nunca puede ver ni modificar las asignaciones de otro. La comprobación se hace en la capa de servicios de la aplicación, no solo ocultando botones.
 - **RNF-08** **Distribución:** la aplicación se publica desde Visual Studio como instalador (ClickOnce o MSIX) para instalarla en cada PC. Con ClickOnce, las actualizaciones se instalan solas al abrir la aplicación.
 - **RNF-09** Arquitectura **MVVM** para separar la interfaz de la lógica y poder probar las reglas de negocio (por ejemplo, RN-01) con tests unitarios.
@@ -384,7 +386,7 @@ HistorialAsignacion (asignacion_id, campo, valor_anterior, valor_nuevo,
 
 ### Hito 6 — Extras y despliegue
 27. CU-20 Exportar a Excel.
-28. Instalar la base de datos compartida y configurar sus copias de seguridad.
+28. Crear la base de datos en Azure SQL, configurar el cortafuegos y el usuario de la aplicación, y revisar las copias de seguridad automáticas.
 29. Publicar el instalador (ClickOnce/MSIX) y desplegarlo en los PCs.
 
 ---
@@ -400,11 +402,9 @@ HistorialAsignacion (asignacion_id, campo, valor_anterior, valor_nuevo,
 | 5 | ¿Una o dos cuentas para el administrador? | **Una sola cuenta** con rol `ADMIN`, que incluye "Mis asignaciones". |
 | 6 | ¿Qué tecnología? | **Aplicación de escritorio WPF** (C#, .NET 8, Visual Studio) con MVVM, Entity Framework Core y una base de datos compartida. Se distribuye con un instalador. |
 | 7 | ¿Qué base de datos? | **SQL Server**, en su versión **Express** (gratuita): admite bases de datos de hasta 10 GB, mucho más de lo que hace falta. Se accede con Entity Framework Core. |
+| 8 | ¿Dónde se aloja la base de datos? | **En la nube, en Azure SQL Database**, para no tener que instalar SQL Server en ningún PC de la oficina. Se usa la oferta gratuita de Azure SQL mientras alcance, y si no, el nivel más bajo de pago. Durante el desarrollo se usa LocalDB. |
+| 9 | ¿Los modelos 200 y 202 salen en todos los trimestres? | **Sí**, igual que en los Excel actuales. Se revisará con el cliente más adelante. Como los modelos son configurables (sección 3), se puede cambiar sin tocar el código. |
 
 ## 10. Dudas abiertas
 
-1. **Dónde se instala SQL Server:**
-   - Si todos trabajan en la **misma oficina y red**: SQL Server Express en el PC de la oficina que más tiempo esté encendido o en un servidor. Es la opción recomendada.
-   - Si alguno trabaja **desde casa**: **Azure SQL** (SQL Server en la nube, con un coste mensual pequeño) o una VPN hacia la oficina.
-   - Durante el desarrollo se usa **LocalDB**, que se instala con Visual Studio.
-2. **[S] Modelos 200 y 202 en la vista trimestral:** se muestran en todos los trimestres, igual que en los Excel actuales. ¿Correcto?
+1. **Instalación en los PCs:** una aplicación WPF siempre hay que instalarla en cada PC. Con ClickOnce basta un enlace o una carpeta compartida: se instala con un clic la primera vez y después se actualiza sola. ¿Es suficiente, o el objetivo es que no haya que instalar **nada** en ningún PC? En ese caso habría que replantear el proyecto como aplicación web.
