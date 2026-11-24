@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>AgendaLogar.App</RootNamespace>
+    <AssemblyName>AgendaLogar</AssemblyName>
+    <!-- Permite compilar también fuera de Windows (por ejemplo, en integración continua). -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AgendaLogar.Presentacion\AgendaLogar.Presentacion.csproj" />
+  </ItemGroup>
+
+  <!-- Imágenes de la marca. Copia aquí el logo original como Recursos\logo.png
+       (y, si quieres, un icono cuadrado como Recursos\icono.png / icono.ico). -->
+  <ItemGroup>
+    <Resource Include="Recursos\**\*.png" />
+    <None Include="Recursos\LEEME.md" />
+  </ItemGroup>
+
+  <PropertyGroup Condition="Exists('Recursos\icono.ico')">
+    <ApplicationIcon>Recursos\icono.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

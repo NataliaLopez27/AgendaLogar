@@ -1,0 +1,25 @@
+<UserControl x:Class="AgendaLogar.App.Views.CatalogoModelosView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:AgendaLogar.Presentacion.ViewModels;assembly=AgendaLogar.Presentacion"
+             xmlns:c="clr-namespace:AgendaLogar.App.Controles"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance Type=vm:CatalogoModelosViewModel}">
+    <DockPanel Margin="36,30">
+        <c:CabeceraPagina DockPanel.Dock="Top" Titulo="Modelos fiscales" Icono="&#xE8A5;" Subtitulo="{Binding Mensaje}" />
+        <Border Style="{StaticResource Tarjeta}" Padding="0" Margin="0,22,0,0" ClipToBounds="True">
+        <DataGrid ItemsSource="{Binding Modelos}" BorderThickness="0">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Modelo" Binding="{Binding Codigo}" Width="90" />
+                <DataGridTextColumn Header="Concepto" Binding="{Binding Descripcion}" Width="*" />
+                <DataGridTextColumn Header="Periodicidad" Binding="{Binding Periodicidad}" Width="120" />
+                <DataGridTextColumn Header="Resume a" Binding="{Binding ResumeA}" Width="90" />
+                <DataGridCheckBoxColumn Header="Físicas" Binding="{Binding AplicaFisica}" Width="80" />
+                <DataGridCheckBoxColumn Header="Sociedades" Binding="{Binding AplicaSociedad}" Width="100" />
+            </DataGrid.Columns>
+        </DataGrid>
+        </Border>
+    </DockPanel>
+</UserControl>
