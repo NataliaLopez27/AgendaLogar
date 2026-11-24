@@ -20,6 +20,14 @@ public sealed record ClienteResumen(
         : "Sin alta";
 }
 
+/// <summary>Un tramo del historial de altas y bajas de un cliente.</summary>
+public sealed record TramoAlta(DateOnly FechaAlta, DateOnly? FechaBaja)
+{
+    public string Texto => FechaBaja is DateOnly b
+        ? $"Alta {FechaAlta:dd/MM/yyyy} · Baja {b:dd/MM/yyyy}"
+        : $"Alta {FechaAlta:dd/MM/yyyy} · Sigue de alta";
+}
+
 /// <summary>Datos básicos de un cliente (alta y edición).</summary>
 public sealed record DatosCliente(string Nombre, string Nif, TipoCliente Tipo, string? Notas);
 
@@ -176,6 +184,62 @@ public class ServicioClientes
         await db.SaveChangesAsync(ct);
         return Resumen(cliente);
     }
+
+    /// <summary>CU-13: historial de altas y bajas, del más reciente al más antiguo.</summary>
+    public async Task<IReadOnlyList<TramoAlta>> HistorialAltasAsync(int id, CancellationToken ct = default)
+    {
+        await using var db = await _fabrica.CreateDbContextAsync(ct);
+        await _acceso.RequerirAdminAsync(db, ct);
+        return await db.AltasCliente.AsNoTracking()
+            .Where(a => a.ClienteId == id)
+            .OrderByDescending(a => a.FechaAlta)
+            .Select(a => new TramoAlta(a.FechaAlta, a.FechaBaja))
+            .ToListAsync(ct);
+    }
+
+    /// <summary>
+    /// CU-13 / RF-22: da de baja al cliente cerrando su tramo de alta actual. El cliente no se borra.
+    /// Sigue apareciendo en el periodo que contiene la fecha de baja (RN-03) y no en los siguientes (RN-01).
+    /// </summary>
+    public async Task<ClienteResumen> DarDeBajaAsync(int id, DateOnly fechaBaja, CancellationToken ct = default)
+    {
+        await using var db = await _fabrica.CreateDbContextAsync(ct);
+        await _acceso.RequerirAdminAsync(db, ct);
+        var cliente = await CargarConHistorialAsync(db, id, ct);
+
+        var abierto = cliente.Altas.SingleOrDefault(a => a.FechaBaja is null)
+            ?? throw new ReglaNegocioException($"{cliente.Nombre} ya está dado de baja.");
+        if (fechaBaja < abierto.FechaAlta)
+            throw new ReglaNegocioException(
+                $"La fecha de baja no puede ser anterior a la fecha de alta ({abierto.FechaAlta:dd/MM/yyyy}).");
+
+        abierto.FechaBaja = fechaBaja;
+        await db.SaveChangesAsync(ct);
+        return Resumen(cliente);
+    }
+
+    /// <summary>CU-13 / RF-23: reactiva al cliente abriendo un tramo de alta nuevo. Se conserva el historial.</summary>
+    public async Task<ClienteResumen> ReactivarAsync(int id, DateOnly fechaAlta, CancellationToken ct = default)
+    {
+        await using var db = await _fabrica.CreateDbContextAsync(ct);
+        await _acceso.RequerirAdminAsync(db, ct);
+        var cliente = await CargarConHistorialAsync(db, id, ct);
+
+        if (cliente.Altas.Any(a => a.FechaBaja is null))
+            throw new ReglaNegocioException($"{cliente.Nombre} ya está de alta.");
+        var ultimaBaja = cliente.Altas.Max(a => a.FechaBaja);
+        if (ultimaBaja is DateOnly b && fechaAlta <= b)
+            throw new ReglaNegocioException(
+                $"La nueva fecha de alta tiene que ser posterior a la última baja ({b:dd/MM/yyyy}).");
+
+        cliente.Altas.Add(new AltaCliente { FechaAlta = fechaAlta });
+        await db.SaveChangesAsync(ct);
+        return Resumen(cliente);
+    }
+
+    private static async Task<Cliente> CargarConHistorialAsync(AgendaLogarDbContext db, int id, CancellationToken ct) =>
+        await db.Clientes.Include(c => c.Altas).Include(c => c.Modelos).SingleOrDefaultAsync(c => c.Id == id, ct)
+        ?? throw new ReglaNegocioException("El cliente no existe.");
 
     private static (string nombre, string nif, string? notas) Validar(DatosCliente datos)
     {

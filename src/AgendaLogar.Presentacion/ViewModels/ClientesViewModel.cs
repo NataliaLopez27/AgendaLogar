@@ -20,7 +20,7 @@ public enum ModoPanelCliente
 /// <summary>Opción de los desplegables de tipo de cliente. Valor nulo = todos.</summary>
 public sealed record OpcionTipo(TipoCliente? Valor, string Texto);
 
-/// <summary>Pantalla de clientes del administrador: listado, alta (CU-11) y edición (CU-12).</summary>
+/// <summary>Pantalla de clientes del administrador: listado, alta (CU-11), edición (CU-12) y baja/reactivación (CU-13).</summary>
 [SoloAdministrador]
 public partial class ClientesViewModel : ViewModelBase
 {
@@ -65,8 +65,17 @@ public partial class ClientesViewModel : ViewModelBase
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HaySeleccion))]
-    [NotifyCanExecuteChangedFor(nameof(EditarCommand))]
+    [NotifyCanExecuteChangedFor(nameof(EditarCommand), nameof(DarDeBajaCommand), nameof(ReactivarCommand))]
     private ClienteResumen? _seleccionado;
+
+    /// <summary>Historial de altas y bajas del cliente seleccionado (CU-13).</summary>
+    public ObservableCollection<TramoAlta> Historial { get; } = new();
+
+    partial void OnSeleccionadoChanged(ClienteResumen? value)
+    {
+        if (Modo is ModoPanelCliente.Baja or ModoPanelCliente.Reactivacion)
+            Modo = ModoPanelCliente.Ninguno;
+    }
 
     private int? _idEditando;
 
@@ -119,8 +128,37 @@ public partial class ClientesViewModel : ViewModelBase
     // ---- Panel lateral ----
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(PanelVisible), nameof(TituloPanel), nameof(EsAlta), nameof(MostrarFormularioDatos))]
+    [NotifyPropertyChangedFor(nameof(PanelVisible), nameof(TituloPanel), nameof(EsAlta), nameof(MostrarFormularioDatos),
+        nameof(MostrarBajaReactivacion), nameof(EtiquetaFecha), nameof(Explicacion))]
     private ModoPanelCliente _modo;
+
+    public bool MostrarBajaReactivacion => Modo is ModoPanelCliente.Baja or ModoPanelCliente.Reactivacion;
+
+    // ---- Baja y reactivación (CU-13) ----
+
+    /// <summary>Fecha de baja o de nueva alta, según el modo.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(Explicacion))]
+    private DateTime? _fechaOperacion = DateTime.Today;
+
+    public string NombreSeleccionado => Seleccionado?.Nombre ?? string.Empty;
+
+    public string EtiquetaFecha => Modo == ModoPanelCliente.Baja ? "Fecha de baja" : "Nueva fecha de alta";
+
+    /// <summary>Explica en qué periodos aparecerá el cliente según RN-01 / RN-03.</summary>
+    public string Explicacion
+    {
+        get
+        {
+            if (FechaOperacion is not DateTime f) return string.Empty;
+            var fecha = DateOnly.FromDateTime(f);
+            var trimestre = Periodo.TrimestreDe(fecha);
+            return Modo == ModoPanelCliente.Baja
+                ? $"Seguirá apareciendo en el {trimestre.Nombre} y en el Anual {fecha.Year}, porque estuvo de alta parte de ese periodo. " +
+                  "Desde el trimestre siguiente ya no aparecerá. Su histórico se conserva."
+                : $"Volverá a aparecer desde el {trimestre.Nombre}. Se conserva el historial de altas y bajas.";
+        }
+    }
 
     public bool PanelVisible => Modo != ModoPanelCliente.Ninguno;
     public bool EsAlta => Modo == ModoPanelCliente.Alta;
@@ -211,6 +249,32 @@ public partial class ClientesViewModel : ViewModelBase
         });
     }
 
+    private bool PuedeDarDeBaja() => Seleccionado is { Activo: true };
+    private bool PuedeReactivar() => Seleccionado is { Activo: false };
+
+    [RelayCommand(CanExecute = nameof(PuedeDarDeBaja))]
+    private Task DarDeBajaAsync() => AbrirBajaReactivacionAsync(ModoPanelCliente.Baja);
+
+    [RelayCommand(CanExecute = nameof(PuedeReactivar))]
+    private Task ReactivarAsync() => AbrirBajaReactivacionAsync(ModoPanelCliente.Reactivacion);
+
+    private async Task AbrirBajaReactivacionAsync(ModoPanelCliente modo)
+    {
+        if (Seleccionado is not { } c) return;
+        await Ejecutar(async () =>
+        {
+            var historial = await _clientes.HistorialAltasAsync(c.Id);
+            Historial.Clear();
+            foreach (var t in historial)
+                Historial.Add(t);
+            _idEditando = c.Id;
+            FechaOperacion = DateTime.Today;
+            ErrorPanel = null;
+            Modo = modo;
+            OnPropertyChanged(nameof(NombreSeleccionado));
+        });
+    }
+
     [RelayCommand]
     private void CancelarPanel()
     {
@@ -256,6 +320,9 @@ public partial class ClientesViewModel : ViewModelBase
                 return await GuardarAltaAsync();
             case ModoPanelCliente.Edicion:
                 return await GuardarEdicionAsync();
+            case ModoPanelCliente.Baja:
+            case ModoPanelCliente.Reactivacion:
+                return await GuardarBajaReactivacionAsync();
             default:
                 return null;
         }
@@ -293,6 +360,26 @@ public partial class ClientesViewModel : ViewModelBase
         var editado = await _clientes.EditarAsync(id, new DatosCliente(Nombre, Nif, Tipo, Notas));
         Aviso = $"Se han guardado los cambios de {editado.Nombre}.";
         return editado;
+    }
+
+    /// <summary>CU-13.</summary>
+    private async Task<ClienteResumen?> GuardarBajaReactivacionAsync()
+    {
+        if (_idEditando is not int id) return null;
+        if (FechaOperacion is not DateTime f)
+            throw new ReglaNegocioException($"Indica la {EtiquetaFecha.ToLower()}.");
+        var fecha = DateOnly.FromDateTime(f);
+
+        if (Modo == ModoPanelCliente.Baja)
+        {
+            var c = await _clientes.DarDeBajaAsync(id, fecha);
+            Aviso = $"{c.Nombre} queda de baja desde el {fecha:dd/MM/yyyy}.";
+            return c;
+        }
+
+        var r = await _clientes.ReactivarAsync(id, fecha);
+        Aviso = $"{r.Nombre} vuelve a estar de alta desde el {fecha:dd/MM/yyyy}.";
+        return r;
     }
 
     /// <summary>Si otro cliente tiene el mismo NIF, avisa y pregunta si continuar (no es bloqueante).</summary>
