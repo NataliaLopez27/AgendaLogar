@@ -1,7 +1,7 @@
 # AgendaLogar — Requisitos y casos de uso
 
-> Versión 0.1 (borrador) · Noviembre 2026
-> Estado: pendiente de revisión. Las suposiciones están marcadas con **[S]** y las dudas abiertas están en la sección 9.
+> Versión 0.2 (borrador) · Noviembre 2026
+> Estado: pendiente de revisión. Las suposiciones están marcadas con **[S]** y las dudas abiertas están en la sección 10.
 
 ---
 
@@ -13,7 +13,7 @@ AgendaLogar sustituye a los Excel ("cuadrantes") con los que la gestoría organi
 
 - Que el **administrador** reparta cada trimestre (y cada año) los clientes entre los empleados.
 - Que cada **empleado** vea solo los clientes que tiene asignados, separados en **personas físicas** y **sociedades**.
-- Que el empleado marque cada modelo como **presentado** e indique su **importe**.
+- Que el empleado marque cada cliente como **Hecho** o **Listo para mandar** e indique su **importe**.
 - Que el administrador vea en todo momento cómo va el trabajo.
 
 ### 1.2 Situación actual
@@ -35,8 +35,7 @@ Volumen aproximado: **4 empleados** y **unos 380 clientes**.
 | Cliente | Persona física o sociedad a la que la gestoría presenta impuestos. |
 | Modelo | Declaración fiscal (303, 111, 130…). |
 | Periodo | Un trimestre (1T–4T) de un año, o el ejercicio anual. |
-| Asignación | Relación "en el periodo P, el cliente C lo lleva el empleado E". |
-| Presentación | Un modelo concreto de un cliente en un periodo, con su estado e importe. |
+| Asignación | Relación "en el periodo P, el cliente C lo lleva el empleado E", con su estado (Pendiente / Hecho / Listo para mandar) e importe. |
 
 ---
 
@@ -62,19 +61,23 @@ Volumen aproximado: **4 empleados** y **unos 380 clientes**.
 | 111 | Retenciones trabajo / profesionales | ✔ | ✔ |
 | 115 | Retenciones alquileres | ✔ | ✔ |
 | 303 | IVA | ✔ | ✔ |
-| 349 | Operaciones intracomunitarias | ✔ | ✔ |
-| 202 | Pago fraccionado Impuesto de Sociedades (abril, octubre, diciembre) | | ✔ |
+| 349 | Operaciones intracomunitarias (solo trimestral) | ✔ | ✔ |
+| 202 | Pago fraccionado Impuesto de Sociedades | | ✔ |
+| 200 | Impuesto de Sociedades | | ✔ |
+
+El 200 y el 202 se muestran en la vista trimestral de sociedades, igual que en los cuadrantes actuales. **No** forman parte de la vista anual.
 
 ### 3.2 Anuales
 
-| Modelo | Concepto | Resume a |
-|---|---|---|
-| 390 | Resumen anual IVA | 303 |
-| 190 | Resumen anual retenciones | 111 |
-| 180 | Resumen anual alquileres | 115 |
-| 347 | Operaciones con terceros | — |
-| 100 | Declaración de la Renta | — |
-| 200 | Impuesto de Sociedades **[S]** | — |
+La sección anual incluye **solo** estos modelos:
+
+| Modelo | Concepto | Resume a | Personas físicas | Sociedades |
+|---|---|---|:-:|:-:|
+| 390 | Resumen anual IVA | 303 | ✔ | ✔ |
+| 190 | Resumen anual retenciones | 111 | ✔ | ✔ |
+| 180 | Resumen anual alquileres | 115 | ✔ | ✔ |
+| 347 | Operaciones con terceros | — | ✔ | ✔ |
+| 100 | Declaración de la Renta | — | ✔ | |
 
 Los modelos se guardan en una tabla configurable, de modo que se pueden añadir modelos nuevos sin tocar el código.
 
@@ -92,18 +95,18 @@ Los modelos se guardan en una tabla configurable, de modo que se pueden añadir 
 ### 4.2 Vista del empleado
 
 - **RF-10** El empleado tiene dos secciones: **Trimestral** y **Anual**.
-- **RF-11** Cada sección se divide en dos pestañas: **Personas físicas** y **Sociedades**. Si un empleado no tiene clientes de un tipo, la pestaña no aparece.
+- **RF-11** Cada sección se divide en dos pestañas: **Personas físicas** y **Sociedades**. Si un empleado no tiene clientes de un tipo en ese periodo, la pestaña aparece vacía o se oculta. Ningún empleado está limitado a un tipo: por ejemplo, Guillermo hoy solo tiene personas físicas, pero el administrador puede asignarle sociedades en cualquier momento.
 - **RF-12** Por defecto se muestra el periodo en curso. El empleado puede consultar periodos anteriores.
-- **RF-13** El listado muestra solo los clientes asignados al empleado en ese periodo. Cada cliente aparece con los modelos que le corresponden, igual que en el cuadrante actual.
-- **RF-14** Al **pulsar sobre un cliente** del listado se abre su **ficha del periodo**. En ella, para cada modelo, el empleado puede indicar:
-  1. **Hecho**: la declaración está realizada.
-  2. **Listo para mandar**: está revisada y preparada para enviar.
-  3. **Importe**: campo numérico con el resultado.
+- **RF-13** El listado muestra solo los clientes asignados al empleado en ese periodo. De cada cliente se ve, como información, qué modelos le corresponden (igual que las "X" del cuadrante actual), junto con su estado y su importe.
+- **RF-14** Al **pulsar sobre un cliente** del listado se abre su **ficha del periodo**. En ella el empleado indica, **para el cliente en conjunto** (no por modelo):
+  1. **Hecho**: el trabajo del cliente está realizado.
+  2. **Listo para mandar**: está revisado y preparado para enviar.
+  3. **Importe**: campo numérico.
 
   El sistema guarda automáticamente la fecha y el usuario de cada cambio.
 - **RF-15** El empleado puede corregir el importe o volver a un estado anterior mientras el periodo esté abierto.
-- **RF-15b** En el listado, cada cliente muestra de un vistazo su estado: *Pendiente*, *Hecho* o *Listo para mandar*. El estado del cliente es el del modelo menos avanzado.
-- **RF-16** El empleado puede añadir una **observación** a un modelo o a un cliente en el periodo.
+- **RF-15b** Solo existen tres estados: *Pendiente*, *Hecho* y *Listo para mandar*. En el listado se ven de un vistazo, por ejemplo con colores.
+- **RF-16** El empleado puede añadir una **observación** al cliente en el periodo.
 - **RF-17** El empleado ve su progreso, por ejemplo "45 de 67 listos para mandar", y puede filtrar por estado y buscar por nombre.
 
 ### 4.3 Gestión de clientes (administrador)
@@ -114,7 +117,7 @@ Los modelos se guardan en una tabla configurable, de modo que se pueden añadir 
 - **RF-23** Reactivar a un cliente dado de baja.
 - **RF-24** Configurar qué **modelos** lleva cada cliente, cada uno con su **fecha de alta y de baja** (por ejemplo, "baja en IVA el 31-3-25").
 - **RF-25** Listar y buscar clientes, filtrando por tipo, estado y empleado habitual.
-- **RF-26** Eliminar definitivamente un cliente, solo si no tiene presentaciones registradas.
+- **RF-26** Eliminar definitivamente un cliente, solo si nunca ha estado asignado en ningún periodo.
 
 ### 4.3.1 Reglas de negocio: vigencia de clientes y modelos
 
@@ -146,14 +149,14 @@ Los modelos se guardan en una tabla configurable, de modo que se pueden añadir 
 - **RF-41** Al crear un periodo, ofrecer **copiar las asignaciones del periodo anterior** del mismo tipo. Solo se incluyen los clientes vigentes según RN-01: los que no están vigentes en el nuevo periodo se excluyen y los clientes nuevos quedan "sin asignar".
 - **RF-42** Asignar y reasignar clientes a empleados, uno a uno o varios a la vez.
 - **RF-43** Ver los clientes **sin asignar** de un periodo.
-- **RF-44** Al crear un periodo, el sistema genera las presentaciones pendientes de cada cliente vigente, según los modelos vigentes en ese periodo (RN-01, RN-02).
+- **RF-44** Al crear un periodo, el sistema incluye a todos los clientes vigentes (RN-01), cada uno en estado *Pendiente*. Los modelos que se muestran de cada cliente son los vigentes en ese periodo (RN-02). En un periodo anual solo se incluyen los clientes que tienen al menos un modelo anual vigente.
 - **RF-45** **Cerrar** un periodo. A partir de ahí queda en solo lectura para los empleados, y el administrador puede reabrirlo.
 
 ### 4.6 Seguimiento e informes (administrador)
 
-- **RF-50** Panel con el progreso de cada empleado en el periodo: presentados, pendientes y porcentaje.
+- **RF-50** Panel con el progreso de cada empleado en el periodo: pendientes, hechos, listos para mandar y porcentaje.
 - **RF-51** Ver el detalle de cualquier empleado, con la misma vista que tiene él.
-- **RF-52** Ver el histórico de un cliente: todos sus periodos, modelos, importes y quién los presentó.
+- **RF-52** Ver el histórico de un cliente: todos sus periodos, con estado, importe y empleado.
 - **RF-53** *(Deseable)* Exportar un periodo a Excel.
 
 ### 4.7 Migración
@@ -168,7 +171,7 @@ Los modelos se guardan en una tabla configurable, de modo que se pueden añadir 
 - **RNF-02** Contraseñas guardadas con hash seguro (bcrypt o argon2) y conexión por HTTPS.
 - **RNF-03** Control de acceso en el servidor: un empleado nunca puede leer ni modificar asignaciones de otro.
 - **RNF-04** Protección de datos (RGPD): se tratan NIF y datos fiscales de terceros. Acceso restringido y copias de seguridad periódicas.
-- **RNF-05** Trazabilidad: guardar quién y cuándo marcó o modificó cada presentación.
+- **RNF-05** Trazabilidad: guardar quién y cuándo cambió el estado o el importe de cada cliente.
 - **RNF-06** El histórico de periodos se conserva indefinidamente.
 - **RNF-07** Pensado para menos de 10 usuarios simultáneos y unos 500 clientes. No hacen falta requisitos de escalabilidad especiales.
 
@@ -190,12 +193,14 @@ ClienteModelo (cliente_id, modelo_codigo, fecha_alta, fecha_baja, notas)
 
 Periodo (id, anio, trimestre[1-4|null=anual], estado[ABIERTO|CERRADO])
 
-Asignacion (periodo_id, cliente_id, usuario_id)
+Asignacion (id, periodo_id, cliente_id, usuario_id [null = sin asignar],
+            estado[PENDIENTE|HECHO|LISTO_PARA_MANDAR],
+            importe, observaciones,
+            fecha_hecho, fecha_listo, modificado_por, modificado_en)
+            -- única por (periodo_id, cliente_id)
 
-Presentacion (id, periodo_id, cliente_id, modelo_codigo,
-              estado[PENDIENTE|HECHO|LISTO_PARA_MANDAR],
-              importe, fecha_hecho, fecha_listo, observaciones,
-              modificado_por, modificado_en)
+HistorialAsignacion (asignacion_id, campo, valor_anterior, valor_nuevo,
+                     usuario_id, fecha)   -- auditoría (RNF-05)
 ```
 
 ---
@@ -240,21 +245,21 @@ Presentacion (id, periodo_id, cliente_id, modelo_codigo,
 - **Flujo principal:**
   1. El empleado abre **Trimestral**. Por defecto se muestra el periodo en curso.
   2. Elige la pestaña **Personas físicas** o **Sociedades**.
-  3. El sistema muestra sus clientes asignados con una columna por modelo. Cada celda indica si el modelo no aplica, está pendiente o está presentado (con importe).
-  4. Puede cambiar de periodo, buscar por nombre y filtrar por pendientes.
+  3. El sistema muestra sus clientes asignados, con los modelos que les corresponden, su estado (Pendiente / Hecho / Listo para mandar) y su importe.
+  4. Puede cambiar de periodo, buscar por nombre y filtrar por estado.
 - **Alternativo:** si no tiene nada asignado en ese periodo, se muestra un mensaje informativo.
 
 ### CU-04 Ver mis asignaciones anuales
-- Igual que CU-03, con los modelos anuales (390, 190, 180, 347, 100, 200).
+- Igual que CU-03, con los modelos anuales (390, 190, 180, 347 y Renta/100).
 
 ### CU-05 Actualizar el estado e importe de un cliente
 - **Actor:** Empleado
 - **Precondición:** periodo abierto y cliente asignado al empleado.
 - **Flujo principal:**
   1. En el listado (por ejemplo, *Trimestral → Personas físicas*), el empleado **pulsa sobre un cliente**.
-  2. Se abre la ficha del cliente para ese periodo, con los modelos que le corresponden.
-  3. Para cada modelo marca **Hecho** y/o **Listo para mandar**.
-  4. Introduce el **importe**. Puede ser 0 o negativo (a devolver o compensar).
+  2. Se abre la ficha del cliente para ese periodo, con los modelos que le corresponden (solo informativo).
+  3. Marca el cliente como **Hecho** y/o **Listo para mandar**.
+  4. Introduce el **importe** del cliente. Puede ser 0 o negativo (a devolver o compensar).
   5. Opcionalmente añade una observación.
   6. Guarda. El sistema registra estado, importe, fecha y usuario, y vuelve al listado con el estado actualizado.
 - **Alternativo:** si el importe no es válido, se muestra un error y no se guarda nada.
@@ -267,7 +272,7 @@ Presentacion (id, periodo_id, cliente_id, modelo_codigo,
 
 ### CU-07 Añadir observación
 - **Actor:** Empleado
-- **Flujo:** añade o edita una nota libre en un modelo o cliente del periodo, por ejemplo "falta factura de octubre".
+- **Flujo:** añade o edita una nota libre en el cliente para ese periodo, por ejemplo "falta factura de octubre".
 
 ### CU-10 Gestionar empleados
 - **Actor:** Administrador
@@ -300,7 +305,7 @@ Presentacion (id, periodo_id, cliente_id, modelo_codigo,
 - **Flujo principal:**
   1. Elige el tipo (trimestral o anual), el año y, si es trimestral, el trimestre.
   2. El sistema calcula los **clientes vigentes** del periodo (RN-01) y propone **copiar las asignaciones** del periodo anterior del mismo tipo.
-  3. El sistema genera las presentaciones pendientes según los modelos vigentes de cada cliente (RN-02).
+  3. El sistema crea una asignación *Pendiente* por cada cliente vigente. Los que estaban asignados en el periodo anterior conservan su empleado y el resto quedan sin asignar.
   4. Muestra un resumen: clientes asignados, sin asignar y dados de baja desde el periodo anterior.
 - **Alternativo:** si el periodo ya existe, se muestra un error.
 
@@ -314,11 +319,11 @@ Presentacion (id, periodo_id, cliente_id, modelo_codigo,
 
 ### CU-18 Panel de seguimiento
 - **Actor:** Administrador
-- **Flujo:** muestra, por empleado, los presentados, los pendientes y el porcentaje en el periodo elegido. Se puede entrar al detalle de cada empleado.
+- **Flujo:** muestra, por empleado, los pendientes, los hechos, los listos para mandar y el porcentaje en el periodo elegido. Se puede entrar al detalle de cada empleado.
 
 ### CU-19 Histórico de cliente
 - **Actor:** Administrador
-- **Flujo:** muestra la ficha del cliente con todos los periodos, los modelos, los importes y quién los presentó.
+- **Flujo:** muestra la ficha del cliente con todos sus periodos: empleado, estado e importe de cada uno.
 
 ### CU-20 Exportar periodo a Excel *(deseable)*
 - **Actor:** Administrador
@@ -349,7 +354,7 @@ Presentacion (id, periodo_id, cliente_id, modelo_codigo,
 
 ### Hito 3 — Periodos y asignaciones
 14. RN-01…RN-05 Cálculo de vigencia de clientes y modelos por periodo, con tests de los casos límite.
-15. CU-15 Crear periodo y generar presentaciones.
+15. CU-15 Crear periodo y generar asignaciones.
 16. RF-41 Copiar asignaciones del periodo anterior.
 17. CU-16 Asignación individual y masiva.
 18. CU-17 Cerrar y reabrir periodo.
@@ -372,13 +377,17 @@ Presentacion (id, periodo_id, cliente_id, modelo_codigo,
 
 ---
 
-## 9. Dudas abiertas
+## 9. Decisiones tomadas
 
-1. **Modelo 200:** ¿entra en la sección anual de sociedades? (Se ha supuesto que sí.)
-2. **Modelo 202:** solo se presenta en abril, octubre y diciembre. ¿Se muestra en el 1T, 3T y 4T, o en todos los trimestres?
-3. **Modelo 349:** ¿es solo trimestral, sin resumen anual?
-4. **Hecho / Listo para mandar / Importe:** ¿van **por cada modelo** del cliente (supuesto: el 303 con su importe, el 111 con el suyo…) o **uno para el cliente entero**?
-5. **Estados:** ¿hace falta algún estado más, como "Presentado" (ya enviado a Hacienda) o "Falta documentación"?
-6. **Guillermo:** su cuadrante no separa por tipo. ¿Son todos personas físicas o hay que clasificarlos?
-7. **Cuentas del administrador:** ¿una cuenta con ambas vistas (recomendado) o dos cuentas?
-8. **Stack tecnológico:** ¿alguna preferencia de lenguaje o framework? ¿Dónde se va a alojar?
+| # | Pregunta | Decisión |
+|---|---|---|
+| 1 | ¿Hecho, Listo para mandar e Importe van por modelo o por cliente? | **Por cliente.** Los modelos solo se muestran como información. |
+| 2 | ¿Hacen falta más estados? | **No.** Solo *Pendiente*, *Hecho* y *Listo para mandar*. |
+| 3 | ¿Qué modelos entran en lo anual? | **Solo** 390, 190, 180, 347 y Renta (100). El 200 y el 202 no entran en lo anual. |
+| 4 | ¿Los clientes de Guillermo son todos personas físicas? | Por ahora sí, pero el administrador puede asignarle sociedades en cualquier momento. No hay restricción por empleado. |
+
+## 10. Dudas abiertas
+
+1. **Cuentas del administrador:** ¿una cuenta con ambas vistas (recomendado) o dos cuentas?
+2. **Stack tecnológico:** ¿alguna preferencia de lenguaje o framework? ¿Dónde se va a alojar?
+3. **[S] Modelos 200 y 202 en la vista trimestral:** se muestran en todos los trimestres, igual que en los Excel actuales. ¿Correcto?
