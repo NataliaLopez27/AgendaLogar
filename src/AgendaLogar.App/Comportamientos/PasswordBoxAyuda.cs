@@ -12,7 +12,9 @@ public static class PasswordBoxAyuda
 {
     public static readonly DependencyProperty PasswordProperty = DependencyProperty.RegisterAttached(
         "Password", typeof(string), typeof(PasswordBoxAyuda),
-        new FrameworkPropertyMetadata(string.Empty, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, AlCambiarPassword));
+        // El valor por defecto es null (no string.Empty) para que, al enlazarlo con "" desde el ViewModel,
+        // se detecte un cambio y se ejecute AlCambiarPassword, que es donde se escucha lo que escribe el usuario.
+        new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, AlCambiarPassword));
 
     private static readonly DependencyProperty ActualizandoProperty = DependencyProperty.RegisterAttached(
         "Actualizando", typeof(bool), typeof(PasswordBoxAyuda));
@@ -20,7 +22,7 @@ public static class PasswordBoxAyuda
     private static readonly DependencyProperty SuscritoProperty = DependencyProperty.RegisterAttached(
         "Suscrito", typeof(bool), typeof(PasswordBoxAyuda));
 
-    public static string GetPassword(DependencyObject d) => (string)d.GetValue(PasswordProperty);
+    public static string? GetPassword(DependencyObject d) => (string?)d.GetValue(PasswordProperty);
     public static void SetPassword(DependencyObject d, string value) => d.SetValue(PasswordProperty, value);
 
     private static void AlCambiarPassword(DependencyObject d, DependencyPropertyChangedEventArgs e)
