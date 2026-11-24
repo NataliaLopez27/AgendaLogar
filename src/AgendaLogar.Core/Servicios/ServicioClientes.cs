@@ -28,6 +28,15 @@ public sealed record TramoAlta(DateOnly FechaAlta, DateOnly? FechaBaja)
         : $"Alta {FechaAlta:dd/MM/yyyy} · Sigue de alta";
 }
 
+/// <summary>Un tramo de un modelo del cliente (CU-14). Si no tiene fecha de baja, está vigente.</summary>
+public sealed record TramoModelo(int Id, string Codigo, string Descripcion, Periodicidad Periodicidad,
+    DateOnly FechaAlta, DateOnly? FechaBaja, string? Notas)
+{
+    public bool Vigente => FechaBaja is null;
+    public string PeriodicidadTexto => Periodicidad == Periodicidad.Anual ? "Anual" : "Trimestral";
+    public string EstadoTexto => FechaBaja is DateOnly b ? $"Baja {b:dd/MM/yyyy}" : "Vigente";
+}
+
 /// <summary>Datos básicos de un cliente (alta y edición).</summary>
 public sealed record DatosCliente(string Nombre, string Nif, TipoCliente Tipo, string? Notas);
 
@@ -235,6 +244,91 @@ public class ServicioClientes
         cliente.Altas.Add(new AltaCliente { FechaAlta = fechaAlta });
         await db.SaveChangesAsync(ct);
         return Resumen(cliente);
+    }
+
+    // ---------------- CU-14: modelos del cliente ----------------
+
+    /// <summary>Todos los tramos de modelos del cliente, en el orden del catálogo y del más reciente al más antiguo.</summary>
+    public async Task<IReadOnlyList<TramoModelo>> ModelosDeClienteAsync(int clienteId, CancellationToken ct = default)
+    {
+        await using var db = await _fabrica.CreateDbContextAsync(ct);
+        await _acceso.RequerirAdminAsync(db, ct);
+        return await db.ClienteModelos.AsNoTracking()
+            .Where(m => m.ClienteId == clienteId)
+            .OrderBy(m => m.Modelo.Orden).ThenByDescending(m => m.FechaAlta)
+            .Select(m => new TramoModelo(m.Id, m.ModeloCodigo, m.Modelo.Descripcion, m.Modelo.Periodicidad,
+                m.FechaAlta, m.FechaBaja, m.Notas))
+            .ToListAsync(ct);
+    }
+
+    /// <summary>
+    /// CU-14: da de alta un modelo al cliente (por ejemplo, "alta en 115 el 17-07-2026").
+    /// Si el modelo ya lo llevó y se dio de baja, la nueva alta tiene que ser posterior a esa baja.
+    /// </summary>
+    public async Task<TramoModelo> AnadirModeloAsync(int clienteId, string codigo, DateOnly fechaAlta,
+        string? notas = null, CancellationToken ct = default)
+    {
+        await using var db = await _fabrica.CreateDbContextAsync(ct);
+        await _acceso.RequerirAdminAsync(db, ct);
+
+        var cliente = await db.Clientes.Include(c => c.Modelos).SingleOrDefaultAsync(c => c.Id == clienteId, ct)
+            ?? throw new ReglaNegocioException("El cliente no existe.");
+        var modelo = await db.Modelos.SingleOrDefaultAsync(m => m.Codigo == codigo, ct)
+            ?? throw new ReglaNegocioException($"El modelo {codigo} no existe.");
+        if (!(cliente.Tipo == TipoCliente.Fisica ? modelo.AplicaFisica : modelo.AplicaSociedad))
+            throw new ReglaNegocioException($"El modelo {codigo} no se aplica a {TipoTexto(cliente.Tipo)}.");
+
+        var tramos = cliente.Modelos.Where(m => m.ModeloCodigo == codigo).ToList();
+        if (tramos.Any(t => t.FechaBaja is null))
+            throw new ReglaNegocioException($"{cliente.Nombre} ya lleva el modelo {codigo}.");
+        var ultimaBaja = tramos.Max(t => t.FechaBaja);
+        if (ultimaBaja is DateOnly b && fechaAlta <= b)
+            throw new ReglaNegocioException(
+                $"La fecha de alta del {codigo} tiene que ser posterior a su última baja ({b:dd/MM/yyyy}).");
+
+        var tramo = new ClienteModelo
+        {
+            ModeloCodigo = codigo,
+            FechaAlta = fechaAlta,
+            Notas = string.IsNullOrWhiteSpace(notas) ? null : notas.Trim()
+        };
+        cliente.Modelos.Add(tramo);
+        await db.SaveChangesAsync(ct);
+        return new TramoModelo(tramo.Id, codigo, modelo.Descripcion, modelo.Periodicidad, tramo.FechaAlta, null, tramo.Notas);
+    }
+
+    /// <summary>CU-14: da de baja un modelo del cliente (por ejemplo, "baja IVA 31-3-25").</summary>
+    public async Task DarDeBajaModeloAsync(int tramoId, DateOnly fechaBaja, CancellationToken ct = default)
+    {
+        await using var db = await _fabrica.CreateDbContextAsync(ct);
+        await _acceso.RequerirAdminAsync(db, ct);
+
+        var tramo = await db.ClienteModelos.SingleOrDefaultAsync(m => m.Id == tramoId, ct)
+            ?? throw new ReglaNegocioException("El modelo no existe.");
+        if (tramo.FechaBaja is not null)
+            throw new ReglaNegocioException($"El modelo {tramo.ModeloCodigo} ya está dado de baja.");
+        if (fechaBaja < tramo.FechaAlta)
+            throw new ReglaNegocioException(
+                $"La fecha de baja no puede ser anterior a la de alta del modelo ({tramo.FechaAlta:dd/MM/yyyy}).");
+
+        tramo.FechaBaja = fechaBaja;
+        await db.SaveChangesAsync(ct);
+    }
+
+    /// <summary>CU-14: notas de un modelo del cliente (por ejemplo, "OJO cambiar número de cuenta").</summary>
+    public async Task CambiarNotasModeloAsync(int tramoId, string? notas, CancellationToken ct = default)
+    {
+        await using var db = await _fabrica.CreateDbContextAsync(ct);
+        await _acceso.RequerirAdminAsync(db, ct);
+
+        var tramo = await db.ClienteModelos.SingleOrDefaultAsync(m => m.Id == tramoId, ct)
+            ?? throw new ReglaNegocioException("El modelo no existe.");
+        var texto = string.IsNullOrWhiteSpace(notas) ? null : notas.Trim();
+        if (texto is { Length: > 500 })
+            throw new ReglaNegocioException("Las notas del modelo no pueden tener más de 500 caracteres.");
+
+        tramo.Notas = texto;
+        await db.SaveChangesAsync(ct);
     }
 
     private static async Task<Cliente> CargarConHistorialAsync(AgendaLogarDbContext db, int id, CancellationToken ct) =>
