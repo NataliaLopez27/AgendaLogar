@@ -1,6 +1,6 @@
 # AgendaLogar — Requisitos y casos de uso
 
-> Versión 0.2 (borrador) · Noviembre 2026
+> Versión 0.3 (borrador) · Noviembre 2026
 > Estado: pendiente de revisión. Las suposiciones están marcadas con **[S]** y las dudas abiertas están en la sección 10.
 
 ---
@@ -46,7 +46,7 @@ Volumen aproximado: **4 empleados** y **unos 380 clientes**.
 | **Empleado** | Guillermo, Javi, Marisa, Nuria… Solo ve y gestiona lo que tiene asignado. |
 | **Administrador** | El responsable de la gestoría. Gestiona clientes, empleados, periodos y asignaciones. Además puede tener clientes asignados como cualquier empleado. |
 
-> **[S] Recomendación:** en lugar de dos cuentas separadas, que el administrador tenga **una sola cuenta con rol de administrador** que incluya también la vista "Mis asignaciones". Así no tiene que cerrar sesión para cambiar de una a otra. Si prefieres dos cuentas, el sistema también lo permite sin cambios.
+> **Decisión:** el administrador tiene **una sola cuenta** con rol `ADMIN`. Esa cuenta incluye la vista "Mis asignaciones" (igual que un empleado) y además el menú de administración. Así puede asignarse clientes a sí mismo y no tiene que cambiar de cuenta.
 
 ---
 
@@ -167,10 +167,13 @@ Los modelos se guardan en una tabla configurable, de modo que se pueden añadir 
 
 ## 5. Requisitos no funcionales
 
-- **RNF-01** Aplicación **web**, en español, usable desde ordenador y móvil.
-- **RNF-02** Contraseñas guardadas con hash seguro (bcrypt o argon2) y conexión por HTTPS.
-- **RNF-03** Control de acceso en el servidor: un empleado nunca puede leer ni modificar asignaciones de otro.
-- **RNF-04** Protección de datos (RGPD): se tratan NIF y datos fiscales de terceros. Acceso restringido y copias de seguridad periódicas.
+- **RNF-01** Aplicación de **escritorio para Windows**, desarrollada en **C# con WPF (.NET 8)** en Visual Studio, con la interfaz en español.
+- **RNF-02** **Base de datos compartida:** todos los puestos (los 4 empleados) trabajan contra la misma base de datos, de modo que lo que asigna el administrador lo ve el empleado al momento.
+- **RNF-03** Contraseñas guardadas con hash seguro (BCrypt). Las conexiones a la base de datos van cifradas cuando salen de la red local.
+- **RNF-04b** Control de acceso: un empleado nunca puede ver ni modificar las asignaciones de otro. La comprobación se hace en la capa de servicios de la aplicación, no solo ocultando botones.
+- **RNF-08** **Distribución:** la aplicación se publica desde Visual Studio como instalador (ClickOnce o MSIX) para instalarla en cada PC. Con ClickOnce, las actualizaciones se instalan solas al abrir la aplicación.
+- **RNF-09** Arquitectura **MVVM** para separar la interfaz de la lógica y poder probar las reglas de negocio (por ejemplo, RN-01) con tests unitarios.
+- **RNF-04** Protección de datos (RGPD): se tratan NIF y datos fiscales de terceros. Acceso restringido y copias de seguridad periódicas de la base de datos.
 - **RNF-05** Trazabilidad: guardar quién y cuándo cambió el estado o el importe de cada cliente.
 - **RNF-06** El histórico de periodos se conserva indefinidamente.
 - **RNF-07** Pensado para menos de 10 usuarios simultáneos y unos 500 clientes. No hacen falta requisitos de escalabilidad especiales.
@@ -334,9 +337,9 @@ HistorialAsignacion (asignacion_id, campo, valor_anterior, valor_nuevo,
 ## 8. Propuesta de issues (backlog)
 
 ### Hito 0 — Arranque
-1. Elegir stack y crear la estructura del proyecto (backend, frontend y base de datos).
-2. Configurar el entorno de desarrollo, el linter y el CI básico.
-3. Crear el esquema de base de datos y las migraciones (sección 6).
+1. Crear la solución en Visual Studio: proyecto WPF, proyecto de lógica/datos y proyecto de tests.
+2. Configurar la base MVVM (CommunityToolkit.Mvvm), la inyección de dependencias y la navegación entre vistas.
+3. Crear el esquema de base de datos con Entity Framework Core y sus migraciones (sección 6).
 4. Cargar el catálogo inicial de modelos fiscales (seed).
 
 ### Hito 1 — Autenticación
@@ -373,7 +376,8 @@ HistorialAsignacion (asignacion_id, campo, valor_anterior, valor_nuevo,
 
 ### Hito 6 — Extras y despliegue
 27. CU-20 Exportar a Excel.
-28. Despliegue, HTTPS y copias de seguridad.
+28. Instalar la base de datos compartida y configurar sus copias de seguridad.
+29. Publicar el instalador (ClickOnce/MSIX) y desplegarlo en los PCs.
 
 ---
 
@@ -385,9 +389,13 @@ HistorialAsignacion (asignacion_id, campo, valor_anterior, valor_nuevo,
 | 2 | ¿Hacen falta más estados? | **No.** Solo *Pendiente*, *Hecho* y *Listo para mandar*. |
 | 3 | ¿Qué modelos entran en lo anual? | **Solo** 390, 190, 180, 347 y Renta (100). El 200 y el 202 no entran en lo anual. |
 | 4 | ¿Los clientes de Guillermo son todos personas físicas? | Por ahora sí, pero el administrador puede asignarle sociedades en cualquier momento. No hay restricción por empleado. |
+| 5 | ¿Una o dos cuentas para el administrador? | **Una sola cuenta** con rol `ADMIN`, que incluye "Mis asignaciones". |
+| 6 | ¿Qué tecnología? | **Aplicación de escritorio WPF** (C#, .NET 8, Visual Studio) con MVVM, Entity Framework Core y una base de datos compartida. Se distribuye con un instalador. |
 
 ## 10. Dudas abiertas
 
-1. **Cuentas del administrador:** ¿una cuenta con ambas vistas (recomendado) o dos cuentas?
-2. **Stack tecnológico:** ¿alguna preferencia de lenguaje o framework? ¿Dónde se va a alojar?
-3. **[S] Modelos 200 y 202 en la vista trimestral:** se muestran en todos los trimestres, igual que en los Excel actuales. ¿Correcto?
+1. **Dónde va la base de datos** (depende de dónde trabajan los empleados):
+   - Si todos trabajan en la **misma oficina y red**: **SQL Server Express** (gratuito) en el PC de la oficina que más tiempo esté encendido o en un servidor. Es la opción recomendada.
+   - Si alguno trabaja **desde casa**: una base de datos en la nube (Azure SQL o PostgreSQL gestionado). Tiene un coste mensual pequeño.
+   - Se descarta usar SQLite en una carpeta compartida, porque falla cuando varios usuarios escriben a la vez.
+2. **[S] Modelos 200 y 202 en la vista trimestral:** se muestran en todos los trimestres, igual que en los Excel actuales. ¿Correcto?
