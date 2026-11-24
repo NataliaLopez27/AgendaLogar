@@ -26,6 +26,9 @@
             <DataTemplate DataType="{x:Type vm:InicioViewModel}">
                 <v:InicioView />
             </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:CambiarPasswordViewModel}">
+                <v:CambiarPasswordView />
+            </DataTemplate>
             <DataTemplate DataType="{x:Type vm:CatalogoModelosViewModel}">
                 <v:CatalogoModelosView />
             </DataTemplate>

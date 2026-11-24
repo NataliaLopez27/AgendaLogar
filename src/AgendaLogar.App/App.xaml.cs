@@ -52,6 +52,7 @@ public partial class App : Application
         servicios.AddTransient<ConexionViewModel>();
         servicios.AddTransient<LoginViewModel>();
         servicios.AddTransient<InicioViewModel>();
+        servicios.AddTransient<CambiarPasswordViewModel>();
         servicios.AddTransient<CatalogoModelosViewModel>();
         servicios.AddSingleton<MainWindow>();
     }
