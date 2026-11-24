@@ -168,7 +168,7 @@ Los modelos se guardan en una tabla configurable, de modo que se pueden añadir 
 ## 5. Requisitos no funcionales
 
 - **RNF-01** Aplicación de **escritorio para Windows**, desarrollada en **C# con WPF (.NET 8)** en Visual Studio, con la interfaz en español.
-- **RNF-02** **Base de datos compartida:** todos los puestos (los 4 empleados) trabajan contra la misma base de datos, de modo que lo que asigna el administrador lo ve el empleado al momento.
+- **RNF-02** **Base de datos compartida en SQL Server (Express):** todos los puestos (los 4 empleados) trabajan contra la misma base de datos, de modo que lo que asigna el administrador lo ve el empleado al momento.
 - **RNF-03** Contraseñas guardadas con hash seguro (BCrypt). Las conexiones a la base de datos van cifradas cuando salen de la red local.
 - **RNF-04b** Control de acceso: un empleado nunca puede ver ni modificar las asignaciones de otro. La comprobación se hace en la capa de servicios de la aplicación, no solo ocultando botones.
 - **RNF-08** **Distribución:** la aplicación se publica desde Visual Studio como instalador (ClickOnce o MSIX) para instalarla en cada PC. Con ClickOnce, las actualizaciones se instalan solas al abrir la aplicación.
@@ -391,11 +391,12 @@ HistorialAsignacion (asignacion_id, campo, valor_anterior, valor_nuevo,
 | 4 | ¿Los clientes de Guillermo son todos personas físicas? | Por ahora sí, pero el administrador puede asignarle sociedades en cualquier momento. No hay restricción por empleado. |
 | 5 | ¿Una o dos cuentas para el administrador? | **Una sola cuenta** con rol `ADMIN`, que incluye "Mis asignaciones". |
 | 6 | ¿Qué tecnología? | **Aplicación de escritorio WPF** (C#, .NET 8, Visual Studio) con MVVM, Entity Framework Core y una base de datos compartida. Se distribuye con un instalador. |
+| 7 | ¿Qué base de datos? | **SQL Server**, en su versión **Express** (gratuita): admite bases de datos de hasta 10 GB, mucho más de lo que hace falta. Se accede con Entity Framework Core. |
 
 ## 10. Dudas abiertas
 
-1. **Dónde va la base de datos** (depende de dónde trabajan los empleados):
-   - Si todos trabajan en la **misma oficina y red**: **SQL Server Express** (gratuito) en el PC de la oficina que más tiempo esté encendido o en un servidor. Es la opción recomendada.
-   - Si alguno trabaja **desde casa**: una base de datos en la nube (Azure SQL o PostgreSQL gestionado). Tiene un coste mensual pequeño.
-   - Se descarta usar SQLite en una carpeta compartida, porque falla cuando varios usuarios escriben a la vez.
+1. **Dónde se instala SQL Server:**
+   - Si todos trabajan en la **misma oficina y red**: SQL Server Express en el PC de la oficina que más tiempo esté encendido o en un servidor. Es la opción recomendada.
+   - Si alguno trabaja **desde casa**: **Azure SQL** (SQL Server en la nube, con un coste mensual pequeño) o una VPN hacia la oficina.
+   - Durante el desarrollo se usa **LocalDB**, que se instala con Visual Studio.
 2. **[S] Modelos 200 y 202 en la vista trimestral:** se muestran en todos los trimestres, igual que en los Excel actuales. ¿Correcto?
