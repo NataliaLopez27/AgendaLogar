@@ -18,7 +18,36 @@ public sealed record ClienteResumen(
     public string EstadoTexto => Activo ? "Activo"
         : FechaBaja is DateOnly b ? $"Baja {b:dd/MM/yyyy}"
         : "Sin alta";
+
+    /// <summary>RF-25: empleado que lo llevó en el último periodo en que estuvo asignado (null = sin asignar).</summary>
+    public int? EmpleadoHabitualId { get; init; }
+
+    public string EmpleadoHabitual { get; init; } = SinAsignar;
+
+    public const string SinAsignar = "Sin asignar";
 }
+
+/// <summary>Estado por el que se filtra el listado de clientes.</summary>
+public enum FiltroEstadoCliente
+{
+    Todos,
+    Activos,
+    DeBaja
+}
+
+/// <summary>
+/// Filtros del listado de clientes (RF-25).
+/// <see cref="EmpleadoId"/>: null = cualquiera, <see cref="SoloSinAsignar"/> = sin empleado habitual.
+/// </summary>
+public sealed record FiltroClientes(
+    string? Texto = null,
+    TipoCliente? Tipo = null,
+    FiltroEstadoCliente Estado = FiltroEstadoCliente.Todos,
+    int? EmpleadoId = null,
+    bool SoloSinAsignar = false);
+
+/// <summary>Empleado que se puede elegir en el filtro de empleado habitual.</summary>
+public sealed record EmpleadoFiltro(int Id, string Nombre);
 
 /// <summary>Un tramo del historial de altas y bajas de un cliente.</summary>
 public sealed record TramoAlta(DateOnly FechaAlta, DateOnly? FechaBaja)
@@ -43,7 +72,7 @@ public sealed record DatosCliente(string Nombre, string Nif, TipoCliente Tipo, s
 /// <summary>Modelo marcado al dar de alta un cliente, con su fecha de alta.</summary>
 public sealed record ModeloAlta(string Codigo, DateOnly FechaAlta);
 
-/// <summary>Gestión de clientes (CU-11 a CU-13). Todas las operaciones son solo para el administrador.</summary>
+/// <summary>Gestión de clientes (CU-11 a CU-14 y RF-25). Todas las operaciones son solo para el administrador.</summary>
 public class ServicioClientes
 {
     private readonly IDbContextFactory<AgendaLogarDbContext> _fabrica;
@@ -55,28 +84,73 @@ public class ServicioClientes
         _acceso = acceso;
     }
 
-    /// <summary>RF-25 (básico): listado con búsqueda por nombre o NIF y filtro por tipo.</summary>
-    public async Task<IReadOnlyList<ClienteResumen>> ListarAsync(
-        string? texto = null, TipoCliente? tipo = null, bool incluirBajas = true, CancellationToken ct = default)
+    /// <summary>Atajo del listado con los filtros más usados.</summary>
+    public Task<IReadOnlyList<ClienteResumen>> ListarAsync(
+        string? texto = null, TipoCliente? tipo = null, bool incluirBajas = true, CancellationToken ct = default) =>
+        ListarAsync(new FiltroClientes(texto, tipo, incluirBajas ? FiltroEstadoCliente.Todos : FiltroEstadoCliente.Activos), ct);
+
+    /// <summary>
+    /// RF-25: listado de clientes con búsqueda por nombre o NIF (sin distinguir mayúsculas ni acentos)
+    /// y filtros por tipo, estado y empleado habitual.
+    /// Con unos 400 clientes, la búsqueda sin acentos se hace en memoria: así funciona igual en cualquier base de datos.
+    /// </summary>
+    public async Task<IReadOnlyList<ClienteResumen>> ListarAsync(FiltroClientes filtro, CancellationToken ct = default)
     {
         await using var db = await _fabrica.CreateDbContextAsync(ct);
         await _acceso.RequerirAdminAsync(db, ct);
 
         var consulta = db.Clientes.AsNoTracking().Include(c => c.Altas).Include(c => c.Modelos).AsQueryable();
-        if (tipo is TipoCliente t)
+        if (filtro.Tipo is TipoCliente t)
             consulta = consulta.Where(c => c.Tipo == t);
-        if (!string.IsNullOrWhiteSpace(texto))
-        {
-            var buscado = texto.Trim().ToLower();
-            var nif = ValidadorNif.Normalizar(texto);
-            consulta = consulta.Where(c => c.Nombre.ToLower().Contains(buscado) || (nif.Length > 0 && c.Nif.Contains(nif)));
-        }
+        var clientes = await consulta.ToListAsync(ct);
 
-        var clientes = await consulta.OrderBy(c => c.Nombre).ToListAsync(ct);
-        var resumenes = clientes.Select(Resumen);
-        if (!incluirBajas)
-            resumenes = resumenes.Where(r => r.Activo);
-        return resumenes.ToList();
+        // Empleado habitual: el del último periodo en que el cliente estuvo asignado.
+        var asignaciones = await db.Asignaciones.AsNoTracking()
+            .Where(a => a.UsuarioId != null)
+            .Select(a => new { a.ClienteId, a.Periodo.Anio, a.Periodo.Trimestre, a.Id, a.UsuarioId, a.Usuario!.Nombre })
+            .ToListAsync(ct);
+        var habituales = asignaciones
+            .GroupBy(a => a.ClienteId)
+            .ToDictionary(g => g.Key, g => g
+                .OrderByDescending(a => a.Anio).ThenByDescending(a => a.Trimestre ?? 4).ThenByDescending(a => a.Id)
+                .First());
+
+        var texto = TextoBusqueda.Normalizar(filtro.Texto);
+        var nif = ValidadorNif.Normalizar(filtro.Texto);
+
+        return clientes
+            .Select(c =>
+            {
+                var r = Resumen(c);
+                return habituales.TryGetValue(c.Id, out var h)
+                    ? r with { EmpleadoHabitualId = h.UsuarioId, EmpleadoHabitual = h.Nombre }
+                    : r;
+            })
+            .Where(r => texto.Length == 0
+                || TextoBusqueda.Normalizar(r.Nombre).Contains(texto)
+                || (nif.Length > 0 && r.Nif.Contains(nif)))
+            .Where(r => filtro.Estado switch
+            {
+                FiltroEstadoCliente.Activos => r.Activo,
+                FiltroEstadoCliente.DeBaja => !r.Activo,
+                _ => true
+            })
+            .Where(r => filtro.SoloSinAsignar
+                ? r.EmpleadoHabitualId is null
+                : filtro.EmpleadoId is not int e || r.EmpleadoHabitualId == e)
+            .OrderBy(r => TextoBusqueda.Normalizar(r.Nombre), StringComparer.Ordinal)
+            .ToList();
+    }
+
+    /// <summary>Usuarios que se pueden elegir en el filtro de empleado habitual.</summary>
+    public async Task<IReadOnlyList<EmpleadoFiltro>> EmpleadosParaFiltroAsync(CancellationToken ct = default)
+    {
+        await using var db = await _fabrica.CreateDbContextAsync(ct);
+        await _acceso.RequerirAdminAsync(db, ct);
+        return await db.Usuarios.AsNoTracking()
+            .OrderByDescending(u => u.Activo).ThenBy(u => u.Nombre)
+            .Select(u => new EmpleadoFiltro(u.Id, u.Nombre))
+            .ToListAsync(ct);
     }
 
     /// <summary>Modelos del catálogo que aplican a un tipo de cliente, en orden.</summary>
