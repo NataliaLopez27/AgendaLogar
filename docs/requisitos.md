@@ -307,7 +307,7 @@ HistorialAsignacion (asignacion_id, campo, valor_anterior, valor_nuevo,
 ### CU-13 Dar de baja o reactivar cliente
 - **Actor:** Administrador
 - **Flujo:** indica la fecha de baja. El cliente se mantiene en el periodo que contiene esa fecha (RN-03) y deja de aparecer en los siguientes. Su histórico se conserva.
-- **Reactivar:** se registra una nueva fecha de alta y el cliente vuelve a aparecer desde el periodo que la contiene. **[S]** Se guarda el historial de altas y bajas, porque un cliente puede darse de baja y volver más tarde.
+- **Reactivar:** se registra una nueva fecha de alta y el cliente vuelve a aparecer desde el periodo que la contiene. Se guarda el historial de altas y bajas, porque un cliente puede darse de baja y volver más tarde.
 
 ### CU-14 Configurar modelos de un cliente
 - **Actor:** Administrador
