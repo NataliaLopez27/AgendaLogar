@@ -8,8 +8,9 @@
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance Type=vm:ConexionViewModel}"
              Background="{StaticResource Blanco}">
-    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Width="360">
-        <c:LogoLogar Height="300" Margin="0,0,0,32" />
+    <Grid>
+    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Width="380">
+        <c:LogoLogar Height="360" Margin="0,0,0,32" />
         <ProgressBar IsIndeterminate="True" Height="3" Foreground="{StaticResource Turquesa}"
                      Background="{StaticResource TurquesaClaro}" BorderThickness="0"
                      Visibility="{Binding Ocupado, Converter={StaticResource BoolAVisibilidad}}" />
@@ -18,4 +19,5 @@
                 HorizontalAlignment="Center" Margin="0,16,0,0"
                 Visibility="{Binding HayError, Converter={StaticResource BoolAVisibilidad}}" />
     </StackPanel>
+    </Grid>
 </UserControl>

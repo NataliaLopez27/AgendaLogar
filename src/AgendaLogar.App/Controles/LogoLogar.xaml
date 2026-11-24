@@ -1,9 +1,11 @@
 <UserControl x:Class="AgendaLogar.App.Controles.LogoLogar"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <!-- Logo de Logar Asesores dibujado en vectores: escala sin perder calidad.
-         Si se prefiere la imagen original, sustituir este contenido por <Image Source="/Recursos/logo.png" />. -->
-    <Viewbox Stretch="Uniform">
+    <!-- Si existe Recursos/logo.png se muestra la imagen original;
+         si no, esta versión dibujada en vectores. -->
+    <Grid>
+    <Image x:Name="ImagenLogo" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" Visibility="Collapsed" />
+    <Viewbox x:Name="LogoVectorial" Stretch="Uniform">
         <Canvas Width="460" Height="610">
             <!-- Rayas diagonales turquesa (esquina superior izquierda) -->
             <Canvas>
@@ -56,4 +58,5 @@
             </StackPanel>
         </Canvas>
     </Viewbox>
+    </Grid>
 </UserControl>

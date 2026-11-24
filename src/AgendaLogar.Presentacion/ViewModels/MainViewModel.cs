@@ -27,7 +27,7 @@ public partial class MainViewModel : ObservableObject
         _sesion.Cambiada += (_, _) => AlCambiarSesion();
     }
 
-    public string Titulo => "AgendaLogar · Logar Asesores";
+    public string Titulo => "Logar Asesores";
 
     /// <summary>Nombre del tipo de la vista actual, para resaltar la opción del menú.</summary>
     public string? SeccionActual => VistaActual?.GetType().Name;

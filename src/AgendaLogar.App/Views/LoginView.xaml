@@ -6,7 +6,7 @@
              xmlns:vm="clr-namespace:AgendaLogar.Presentacion.ViewModels;assembly=AgendaLogar.Presentacion"
              xmlns:c="clr-namespace:AgendaLogar.App.Controles"
              xmlns:ayuda="clr-namespace:AgendaLogar.App.Comportamientos"
-             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="760"
+             mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
              d:DataContext="{d:DesignInstance Type=vm:LoginViewModel}">
     <Grid>
         <Grid.ColumnDefinitions>
@@ -14,18 +14,42 @@
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <!-- Izquierda: logo sobre blanco -->
+        <!-- Izquierda: el logo sobre blanco, como en la imagen corporativa -->
         <Border Grid.Column="0" Background="{StaticResource Blanco}">
-            <c:LogoLogar Margin="60" MaxHeight="520" />
+            <c:LogoLogar Margin="60" MaxHeight="560" />
         </Border>
 
-        <!-- Derecha: formulario -->
-        <Border Grid.Column="1" Background="{StaticResource Fondo}">
-            <Border Style="{StaticResource Tarjeta}" Width="380" Padding="36"
-                    HorizontalAlignment="Center" VerticalAlignment="Center">
+        <!-- Derecha: degradado turquesa con rayas y el formulario en una tarjeta -->
+        <Grid Grid.Column="1" Background="{StaticResource DegradadoCabecera}">
+            <Border HorizontalAlignment="Right" VerticalAlignment="Top" Width="340" Height="340"
+                    Background="{StaticResource RayasBlancas}" IsHitTestVisible="False">
+                <Border.OpacityMask>
+                    <LinearGradientBrush StartPoint="1,0" EndPoint="0,1">
+                        <GradientStop Color="Black" Offset="0" />
+                        <GradientStop Color="Transparent" Offset="0.7" />
+                    </LinearGradientBrush>
+                </Border.OpacityMask>
+            </Border>
+            <Border HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="260" Height="260"
+                    Background="{StaticResource RayasBlancas}" IsHitTestVisible="False" Opacity="0.6">
+                <Border.OpacityMask>
+                    <LinearGradientBrush StartPoint="0,1" EndPoint="1,0">
+                        <GradientStop Color="Black" Offset="0" />
+                        <GradientStop Color="Transparent" Offset="0.7" />
+                    </LinearGradientBrush>
+                </Border.OpacityMask>
+            </Border>
+
+            <Border Style="{StaticResource Tarjeta}" Width="400" Padding="40,36"
+                    HorizontalAlignment="Center" VerticalAlignment="Center" CornerRadius="16">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="40" ShadowDepth="8" Direction="270" Opacity="0.25" Color="#063A44" />
+                </Border.Effect>
                 <StackPanel>
-                    <TextBlock Text="Bienvenido" Style="{StaticResource TituloPagina}" />
-                    <TextBlock Text="Inicia sesión para ver tu agenda." Style="{StaticResource Subtitulo}" Margin="0,0,0,12" />
+                    <Border Height="4" Width="48" CornerRadius="2" Background="{StaticResource Turquesa}"
+                            HorizontalAlignment="Left" Margin="0,0,0,18" />
+                    <TextBlock Text="Bienvenido" Style="{StaticResource TituloPagina}" FontSize="32" />
+                    <TextBlock Text="Inicia sesión para acceder a tu agenda." Style="{StaticResource Subtitulo}" Margin="0,0,0,14" />
 
                     <TextBlock Text="Usuario" Style="{StaticResource Etiqueta}" />
                     <TextBox x:Name="CajaUsuario" Text="{Binding NombreUsuario, UpdateSourceTrigger=PropertyChanged}" />
@@ -43,9 +67,12 @@
                     </Border>
 
                     <Button Content="Iniciar sesión" Command="{Binding IniciarSesionCommand}" IsDefault="True"
-                            Style="{StaticResource BotonPrimario}" Margin="0,24,0,0" HorizontalAlignment="Stretch" />
+                            Style="{StaticResource BotonPrimario}" Margin="0,26,0,0" Padding="20,12" HorizontalAlignment="Stretch" />
                 </StackPanel>
             </Border>
-        </Border>
+
+            <TextBlock Text="© Logar Asesores" Foreground="#B3FFFFFF" FontSize="12"
+                       HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,20" />
+        </Grid>
     </Grid>
 </UserControl>

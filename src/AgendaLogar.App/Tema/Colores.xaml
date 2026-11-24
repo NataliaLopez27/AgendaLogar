@@ -25,7 +25,67 @@
     <SolidColorBrush x:Key="ErrorFondo" Color="{StaticResource ColorErrorFondo}" />
     <SolidColorBrush x:Key="Exito" Color="{StaticResource ColorExito}" />
 
+    <!-- Degradados de marca -->
+    <LinearGradientBrush x:Key="DegradadoMenu" StartPoint="0,0" EndPoint="0.4,1">
+        <GradientStop Color="#0F6E80" Offset="0" />
+        <GradientStop Color="#0A4652" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="DegradadoCabecera" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#1BA3BC" Offset="0" />
+        <GradientStop Color="#0E6577" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="DegradadoSuave" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#F6F8F9" Offset="0" />
+        <GradientStop Color="#E3F4F7" Offset="1" />
+    </LinearGradientBrush>
+
+    <!-- Rayas diagonales como las del logo (para fondos decorativos) -->
+    <DrawingBrush x:Key="RayasBlancas" TileMode="Tile" Viewport="0,0,22,22" ViewportUnits="Absolute"
+                  Viewbox="0,0,22,22" ViewboxUnits="Absolute" Stretch="None">
+        <DrawingBrush.Transform>
+            <RotateTransform Angle="45" />
+        </DrawingBrush.Transform>
+        <DrawingBrush.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="Transparent">
+                    <GeometryDrawing.Geometry>
+                        <RectangleGeometry Rect="0,0,22,22" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="#2EFFFFFF">
+                    <GeometryDrawing.Geometry>
+                        <RectangleGeometry Rect="0,0,7,22" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingBrush.Drawing>
+    </DrawingBrush>
+    <DrawingBrush x:Key="RayasTurquesa" TileMode="Tile" Viewport="0,0,22,22" ViewportUnits="Absolute"
+                  Viewbox="0,0,22,22" ViewboxUnits="Absolute" Stretch="None">
+        <DrawingBrush.Transform>
+            <RotateTransform Angle="45" />
+        </DrawingBrush.Transform>
+        <DrawingBrush.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="Transparent">
+                    <GeometryDrawing.Geometry>
+                        <RectangleGeometry Rect="0,0,22,22" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="#1BA3BC">
+                    <GeometryDrawing.Geometry>
+                        <RectangleGeometry Rect="0,0,7,22" />
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingBrush.Drawing>
+    </DrawingBrush>
+
+    <!-- Sombra suave para tarjetas -->
+    <DropShadowEffect x:Key="Sombra" BlurRadius="18" ShadowDepth="3" Direction="270" Opacity="0.10" Color="#0E6577" />
+
     <FontFamily x:Key="FuenteTexto">Segoe UI</FontFamily>
+    <FontFamily x:Key="FuenteIconos">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
     <FontFamily x:Key="FuenteTitulo">Bodoni MT, Didot, Georgia</FontFamily>
     <FontFamily x:Key="FuenteFirma">Segoe Script, Brush Script MT</FontFamily>
 </ResourceDictionary>

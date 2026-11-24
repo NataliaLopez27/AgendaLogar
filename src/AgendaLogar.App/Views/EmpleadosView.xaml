@@ -4,9 +4,10 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:AgendaLogar.Presentacion.ViewModels;assembly=AgendaLogar.Presentacion"
+             xmlns:c="clr-namespace:AgendaLogar.App.Controles"
              mc:Ignorable="d" d:DesignWidth="950" d:DesignHeight="700"
              d:DataContext="{d:DesignInstance Type=vm:EmpleadosViewModel}">
-    <Grid Margin="40,32">
+    <Grid Margin="36,30">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -19,18 +20,15 @@
         </Grid.ColumnDefinitions>
 
         <!-- Cabecera -->
-        <DockPanel Grid.ColumnSpan="2">
-            <Button DockPanel.Dock="Right" Content="+  Nuevo empleado" Command="{Binding NuevoCommand}"
-                    Style="{StaticResource BotonPrimario}" VerticalAlignment="Center" />
-            <StackPanel>
-                <TextBlock Text="Empleados" Style="{StaticResource TituloPagina}" />
-                <TextBlock Text="Crea usuarios, cambia su rol, desactívalos o restablece su contraseña."
-                           Style="{StaticResource Subtitulo}" />
-            </StackPanel>
-        </DockPanel>
+        <c:CabeceraPagina Grid.ColumnSpan="2" Titulo="Empleados" Icono="&#xE716;"
+                          Subtitulo="Crea usuarios, cambia su rol, desactívalos o restablece su contraseña.">
+            <c:CabeceraPagina.Acciones>
+                <Button Content="+  Nuevo empleado" Command="{Binding NuevoCommand}" Style="{StaticResource BotonClaro}" />
+            </c:CabeceraPagina.Acciones>
+        </c:CabeceraPagina>
 
         <!-- Avisos -->
-        <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Margin="0,8,0,8">
+        <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Margin="0,14,0,10">
             <Border Style="{StaticResource CajaError}"
                     Visibility="{Binding Error, Converter={StaticResource TextoAVisibilidad}}">
                 <TextBlock Text="{Binding Error}" Foreground="{StaticResource Error}" TextWrapping="Wrap" />
@@ -44,7 +42,8 @@
         </StackPanel>
 
         <!-- Listado -->
-        <DataGrid Grid.Row="2" ItemsSource="{Binding Usuarios}" SelectedItem="{Binding Seleccionado}">
+        <Border Grid.Row="2" Style="{StaticResource Tarjeta}" Padding="0" ClipToBounds="True">
+        <DataGrid ItemsSource="{Binding Usuarios}" SelectedItem="{Binding Seleccionado}" BorderThickness="0">
             <DataGrid.InputBindings>
                 <MouseBinding Gesture="LeftDoubleClick" Command="{Binding EditarCommand}" />
             </DataGrid.InputBindings>
@@ -75,6 +74,7 @@
                 <DataGridCheckBoxColumn Header="Debe cambiar contraseña" Binding="{Binding DebeCambiarPassword}" Width="180" />
             </DataGrid.Columns>
         </DataGrid>
+        </Border>
 
         <!-- Acciones sobre el seleccionado -->
         <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,16,0,0">

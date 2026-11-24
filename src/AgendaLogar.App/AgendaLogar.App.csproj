@@ -21,6 +21,17 @@
     <ProjectReference Include="..\AgendaLogar.Presentacion\AgendaLogar.Presentacion.csproj" />
   </ItemGroup>
 
+  <!-- Imágenes de la marca. Copia aquí el logo original como Recursos\logo.png
+       (y, si quieres, un icono cuadrado como Recursos\icono.png / icono.ico). -->
+  <ItemGroup>
+    <Resource Include="Recursos\**\*.png" />
+    <None Include="Recursos\LEEME.md" />
+  </ItemGroup>
+
+  <PropertyGroup Condition="Exists('Recursos\icono.ico')">
+    <ApplicationIcon>Recursos\icono.ico</ApplicationIcon>
+  </PropertyGroup>
+
   <ItemGroup>
     <None Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

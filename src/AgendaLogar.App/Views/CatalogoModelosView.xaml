@@ -4,12 +4,13 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:AgendaLogar.Presentacion.ViewModels;assembly=AgendaLogar.Presentacion"
+             xmlns:c="clr-namespace:AgendaLogar.App.Controles"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance Type=vm:CatalogoModelosViewModel}">
-    <DockPanel Margin="40,32">
-        <TextBlock DockPanel.Dock="Top" Text="Modelos fiscales" Style="{StaticResource TituloPagina}" />
-        <TextBlock DockPanel.Dock="Top" Text="{Binding Mensaje}" Style="{StaticResource Subtitulo}" Margin="0,0,0,16" />
-        <DataGrid ItemsSource="{Binding Modelos}">
+    <DockPanel Margin="36,30">
+        <c:CabeceraPagina DockPanel.Dock="Top" Titulo="Modelos fiscales" Icono="&#xE8A5;" Subtitulo="{Binding Mensaje}" />
+        <Border Style="{StaticResource Tarjeta}" Padding="0" Margin="0,22,0,0" ClipToBounds="True">
+        <DataGrid ItemsSource="{Binding Modelos}" BorderThickness="0">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Modelo" Binding="{Binding Codigo}" Width="90" />
                 <DataGridTextColumn Header="Concepto" Binding="{Binding Descripcion}" Width="*" />
@@ -19,5 +20,6 @@
                 <DataGridCheckBoxColumn Header="Sociedades" Binding="{Binding AplicaSociedad}" Width="100" />
             </DataGrid.Columns>
         </DataGrid>
+        </Border>
     </DockPanel>
 </UserControl>

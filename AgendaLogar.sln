@@ -3,13 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgendaLogar.App", "src\AgendaLogar.App\AgendaLogar.App.csproj", "{B7A3C1D2-4E5F-4A6B-9C8D-0E1F2A3B4C5D}"
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{A64275E2-16B8-4351-A063-037A841686B5}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgendaLogar.Core", "src\AgendaLogar.Core\AgendaLogar.Core.csproj", "{667BD2CE-5DCD-45F8-B36F-311CDFBE4C97}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgendaLogar.Presentacion", "src\AgendaLogar.Presentacion\AgendaLogar.Presentacion.csproj", "{299F6767-48E2-43B5-9569-D2068F951031}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgendaLogar.App", "src\AgendaLogar.App\AgendaLogar.App.csproj", "{B7A3C1D2-4E5F-4A6B-9C8D-0E1F2A3B4C5D}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{4E124587-D3E3-4EEB-B1E1-FD0A57550CC8}"
 EndProject

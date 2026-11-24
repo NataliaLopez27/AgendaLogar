@@ -8,65 +8,72 @@
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=vm:MainViewModel}"
         Title="{Binding Titulo}"
-        Width="1200" Height="760" MinWidth="900" MinHeight="600"
+        Width="1280" Height="800" MinWidth="960" MinHeight="620"
         WindowStartupLocation="CenterScreen"
         Background="{StaticResource Fondo}"
         FontFamily="{StaticResource FuenteTexto}">
     <DockPanel>
         <!-- Menú lateral (solo con sesión iniciada) -->
-        <Border DockPanel.Dock="Left" Width="250" Background="{StaticResource Blanco}"
-                BorderBrush="{StaticResource GrisLinea}" BorderThickness="0,0,1,0"
+        <Border DockPanel.Dock="Left" Width="264" Background="{StaticResource DegradadoMenu}"
                 Visibility="{Binding MostrarMenu, Converter={StaticResource BoolAVisibilidad}}">
-            <DockPanel Margin="16,20">
-                <!-- Cabecera con el logo -->
-                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="4,0,0,24">
-                    <c:LogoMonograma Width="54" Height="54" />
-                    <StackPanel VerticalAlignment="Center" Margin="10,0,0,0">
-                        <TextBlock FontFamily="{StaticResource FuenteTitulo}" FontSize="19" Foreground="{StaticResource Negro}">
-                            <Run Text="L" /><Run Text="O" Foreground="{StaticResource Turquesa}" /><Run Text="GAR" />
-                        </TextBlock>
-                        <TextBlock Text="AgendaLogar" FontSize="11" Foreground="{StaticResource Gris}" />
-                    </StackPanel>
-                </StackPanel>
-
-                <!-- Usuario conectado y acciones de sesión -->
-                <Border DockPanel.Dock="Bottom" BorderBrush="{StaticResource GrisLinea}" BorderThickness="0,1,0,0" Padding="4,16,4,0">
-                    <StackPanel>
-                        <StackPanel Orientation="Horizontal">
-                            <Border Width="38" Height="38" CornerRadius="19" Background="{StaticResource Turquesa}">
-                                <TextBlock Text="{Binding Iniciales}" Foreground="{StaticResource Blanco}" FontWeight="SemiBold"
-                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            </Border>
-                            <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding NombreUsuario}" FontWeight="SemiBold" Foreground="{StaticResource Negro}" />
-                                <TextBlock Text="{Binding RolUsuario}" FontSize="12" Foreground="{StaticResource Gris}" />
-                            </StackPanel>
-                        </StackPanel>
-                        <Button Content="Cambiar contraseña" Command="{Binding IrACambiarPasswordCommand}"
-                                Style="{StaticResource BotonEnlace}" Margin="0,12,0,0" />
-                        <Button Content="Cerrar sesión" Command="{Binding CerrarSesionCommand}"
-                                Style="{StaticResource BotonEnlace}" />
-                    </StackPanel>
+            <Grid>
+                <!-- Rayas del logo, muy suaves, en la parte baja -->
+                <Border VerticalAlignment="Bottom" Height="220" Background="{StaticResource RayasBlancas}" Opacity="0.35"
+                        IsHitTestVisible="False">
+                    <Border.OpacityMask>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                            <GradientStop Color="Transparent" Offset="0" />
+                            <GradientStop Color="Black" Offset="1" />
+                        </LinearGradientBrush>
+                    </Border.OpacityMask>
                 </Border>
 
-                <!-- Opciones -->
-                <StackPanel>
-                    <TextBlock Text="MI TRABAJO" Style="{StaticResource Etiqueta}" Margin="8,0,0,6" Foreground="{StaticResource Gris}" />
-                    <RadioButton Content="Inicio" Style="{StaticResource OpcionMenu}" GroupName="Menu"
-                                 Command="{Binding IrAInicioCommand}"
-                                 IsChecked="{Binding SeccionActual, Mode=OneWay, Converter={StaticResource IgualA}, ConverterParameter=InicioViewModel}" />
+                <DockPanel Margin="18,20">
+                    <!-- Logo sobre tarjeta blanca -->
+                    <Border DockPanel.Dock="Top" Background="{StaticResource Blanco}" CornerRadius="12" Padding="14,10"
+                            Margin="0,0,0,26" Height="150" Effect="{StaticResource Sombra}">
+                        <c:LogoLogar />
+                    </Border>
 
-                    <StackPanel x:Name="MenuAdmin" Visibility="{Binding EsAdmin, Converter={StaticResource BoolAVisibilidad}}">
-                        <TextBlock Text="ADMINISTRACIÓN" Style="{StaticResource Etiqueta}" Margin="8,20,0,6" Foreground="{StaticResource Gris}" />
-                        <RadioButton Content="Empleados" Style="{StaticResource OpcionMenu}" GroupName="Menu"
-                                     Command="{Binding IrAEmpleadosCommand}"
-                                     IsChecked="{Binding SeccionActual, Mode=OneWay, Converter={StaticResource IgualA}, ConverterParameter=EmpleadosViewModel}" />
-                        <RadioButton Content="Modelos fiscales" Style="{StaticResource OpcionMenu}" GroupName="Menu"
-                                     Command="{Binding IrACatalogoModelosCommand}"
-                                     IsChecked="{Binding SeccionActual, Mode=OneWay, Converter={StaticResource IgualA}, ConverterParameter=CatalogoModelosViewModel}" />
+                    <!-- Usuario conectado y acciones de sesión -->
+                    <Border DockPanel.Dock="Bottom" Background="#1F000000" CornerRadius="12" Padding="12">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="2,0,0,8">
+                                <Border Width="40" Height="40" CornerRadius="20" Background="{StaticResource Blanco}">
+                                    <TextBlock Text="{Binding Iniciales}" Foreground="{StaticResource TurquesaOscuro}" FontWeight="Bold"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding NombreUsuario}" FontWeight="SemiBold" Foreground="{StaticResource Blanco}" />
+                                    <TextBlock Text="{Binding RolUsuario}" FontSize="12" Foreground="#B3FFFFFF" />
+                                </StackPanel>
+                            </StackPanel>
+                            <Button Content="Cambiar contraseña" Tag="&#xE72E;" Command="{Binding IrACambiarPasswordCommand}"
+                                    Style="{StaticResource EnlaceMenu}" />
+                            <Button Content="Cerrar sesión" Tag="&#xE7E8;" Command="{Binding CerrarSesionCommand}"
+                                    Style="{StaticResource EnlaceMenu}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Opciones -->
+                    <StackPanel>
+                        <TextBlock Text="MI TRABAJO" FontSize="11" FontWeight="SemiBold" Foreground="#8CFFFFFF" Margin="16,0,0,8" />
+                        <RadioButton Content="Inicio" Tag="&#xE80F;" Style="{StaticResource OpcionMenu}" GroupName="Menu"
+                                     Command="{Binding IrAInicioCommand}"
+                                     IsChecked="{Binding SeccionActual, Mode=OneWay, Converter={StaticResource IgualA}, ConverterParameter=InicioViewModel}" />
+
+                        <StackPanel Visibility="{Binding EsAdmin, Converter={StaticResource BoolAVisibilidad}}">
+                            <TextBlock Text="ADMINISTRACIÓN" FontSize="11" FontWeight="SemiBold" Foreground="#8CFFFFFF" Margin="16,22,0,8" />
+                            <RadioButton Content="Empleados" Tag="&#xE716;" Style="{StaticResource OpcionMenu}" GroupName="Menu"
+                                         Command="{Binding IrAEmpleadosCommand}"
+                                         IsChecked="{Binding SeccionActual, Mode=OneWay, Converter={StaticResource IgualA}, ConverterParameter=EmpleadosViewModel}" />
+                            <RadioButton Content="Modelos fiscales" Tag="&#xE8A5;" Style="{StaticResource OpcionMenu}" GroupName="Menu"
+                                         Command="{Binding IrACatalogoModelosCommand}"
+                                         IsChecked="{Binding SeccionActual, Mode=OneWay, Converter={StaticResource IgualA}, ConverterParameter=CatalogoModelosViewModel}" />
+                        </StackPanel>
                     </StackPanel>
-                </StackPanel>
-            </DockPanel>
+                </DockPanel>
+            </Grid>
         </Border>
 
         <!-- Vista actual (se elige por DataTemplate en App.xaml) -->
