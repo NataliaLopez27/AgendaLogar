@@ -354,7 +354,7 @@ HistorialAsignacion (asignacion_id, campo, valor_anterior, valor_nuevo,
 
 ### Hito 1 — Autenticación
 5. CU-01 Inicio y cierre de sesión.
-6. Roles y control de acceso en el servidor (RNF-03).
+6. Roles y control de acceso en la capa de servicios (RF-02, RNF-04b).
 7. CU-02 Cambiar contraseña.
 8. CU-10 Gestión de empleados.
 
