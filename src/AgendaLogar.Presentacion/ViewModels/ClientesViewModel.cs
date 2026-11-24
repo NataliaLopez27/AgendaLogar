@@ -20,7 +20,7 @@ public enum ModoPanelCliente
 /// <summary>Opción de los desplegables de tipo de cliente. Valor nulo = todos.</summary>
 public sealed record OpcionTipo(TipoCliente? Valor, string Texto);
 
-/// <summary>Pantalla de clientes del administrador: listado y alta (CU-11).</summary>
+/// <summary>Pantalla de clientes del administrador: listado, alta (CU-11) y edición (CU-12).</summary>
 [SoloAdministrador]
 public partial class ClientesViewModel : ViewModelBase
 {
@@ -65,7 +65,10 @@ public partial class ClientesViewModel : ViewModelBase
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HaySeleccion))]
+    [NotifyCanExecuteChangedFor(nameof(EditarCommand))]
     private ClienteResumen? _seleccionado;
+
+    private int? _idEditando;
 
     public bool HaySeleccion => Seleccionado is not null;
 
@@ -190,6 +193,24 @@ public partial class ClientesViewModel : ViewModelBase
         }
     }
 
+    /// <summary>CU-12: abre el formulario con los datos del cliente seleccionado.</summary>
+    [RelayCommand(CanExecute = nameof(HaySeleccion))]
+    private async Task EditarAsync()
+    {
+        if (Seleccionado is not { } c) return;
+        await Ejecutar(async () =>
+        {
+            var datos = await _clientes.ObtenerDatosAsync(c.Id);
+            _idEditando = c.Id;
+            Nombre = datos.Nombre;
+            Nif = datos.Nif;
+            Tipo = datos.Tipo;
+            Notas = datos.Notas ?? string.Empty;
+            ErrorPanel = null;
+            Modo = ModoPanelCliente.Edicion;
+        });
+    }
+
     [RelayCommand]
     private void CancelarPanel()
     {
@@ -233,6 +254,8 @@ public partial class ClientesViewModel : ViewModelBase
         {
             case ModoPanelCliente.Alta:
                 return await GuardarAltaAsync();
+            case ModoPanelCliente.Edicion:
+                return await GuardarEdicionAsync();
             default:
                 return null;
         }
@@ -258,6 +281,18 @@ public partial class ClientesViewModel : ViewModelBase
         var creado = await _clientes.CrearAsync(new DatosCliente(Nombre, Nif, Tipo, Notas), DateOnly.FromDateTime(fecha), modelos);
         Aviso = $"Se ha dado de alta a {creado.Nombre}.";
         return creado;
+    }
+
+    /// <summary>CU-12.</summary>
+    private async Task<ClienteResumen?> GuardarEdicionAsync()
+    {
+        if (_idEditando is not int id) return null;
+        if (!await ConfirmarNifDuplicadoAsync(excluirId: id))
+            return null;
+
+        var editado = await _clientes.EditarAsync(id, new DatosCliente(Nombre, Nif, Tipo, Notas));
+        Aviso = $"Se han guardado los cambios de {editado.Nombre}.";
+        return editado;
     }
 
     /// <summary>Si otro cliente tiene el mismo NIF, avisa y pregunta si continuar (no es bloqueante).</summary>
