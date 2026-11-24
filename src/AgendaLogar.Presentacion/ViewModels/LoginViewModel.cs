@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.Input;
 namespace AgendaLogar.Presentacion.ViewModels;
 
 /// <summary>CU-01 Iniciar sesión.</summary>
+[VistaPublica]
 public partial class LoginViewModel : ViewModelBase
 {
     private readonly ServicioAutenticacion _autenticacion;

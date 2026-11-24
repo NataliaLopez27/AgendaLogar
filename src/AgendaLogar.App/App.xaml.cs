@@ -40,6 +40,7 @@ public partial class App : Application
         // Seguridad y servicios de negocio
         servicios.AddSingleton<IHashPassword, HashPasswordBCrypt>();
         servicios.AddSingleton<ISesion, Sesion>();
+        servicios.AddSingleton<ControlAcceso>();
         servicios.AddSingleton<ServicioAutenticacion>();
 
         // Navegación

@@ -8,6 +8,7 @@ namespace AgendaLogar.Presentacion.ViewModels;
 /// Primera pantalla: conecta con la base de datos, aplica las migraciones y crea el administrador inicial.
 /// Muestra "Conectando…" mientras Azure SQL se despierta (RNF-03c).
 /// </summary>
+[VistaPublica]
 public partial class ConexionViewModel : ViewModelBase
 {
     private readonly InicializadorBaseDatos _inicializador;

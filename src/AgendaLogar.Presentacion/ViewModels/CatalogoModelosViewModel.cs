@@ -1,11 +1,13 @@
 using System.Collections.ObjectModel;
 using AgendaLogar.Core.Datos;
 using AgendaLogar.Core.Dominio;
+using AgendaLogar.Presentacion.Navegacion;
 using Microsoft.EntityFrameworkCore;
 
 namespace AgendaLogar.Presentacion.ViewModels;
 
 /// <summary>Muestra el catálogo de modelos fiscales cargado por el seed.</summary>
+[SoloAdministrador]
 public class CatalogoModelosViewModel : ViewModelBase
 {
     private readonly IDbContextFactory<AgendaLogarDbContext> _fabrica;
