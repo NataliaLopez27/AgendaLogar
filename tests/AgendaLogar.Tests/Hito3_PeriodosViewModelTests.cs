@@ -125,3 +125,63 @@ public class Hito3_PeriodosViewModelTests
         Assert.True(vm.PeriodoAbierto);
     }
 }
+
+public class RN04_ClientesEnPeriodosAbiertosTests
+{
+    [Fact]
+    public async Task Al_dar_de_alta_propone_anadirlo_a_los_periodos_abiertos()
+    {
+        using var e = new EscenarioPeriodos();
+        var p = await e.Servicio.CrearAsync(2026, 4, true);
+        var dialogos = new DialogosFalsos(true);
+        var vm = new ClientesViewModel(e.ServicioClientes, dialogos, e.Servicio);
+        await vm.AlEntrarAsync();
+
+        await vm.NuevoCommand.ExecuteAsync(null);
+        vm.Nombre = "Nuevo";
+        vm.Nif = "12345678Z";
+        vm.FechaAlta = new DateTime(2026, 11, 2);
+        await vm.GuardarPanelCommand.ExecuteAsync(null);
+
+        Assert.Equal(1, dialogos.Veces);
+        Assert.Contains("Añadido a: 4T 2026.", vm.Aviso);
+        Assert.Single(await e.Filas(p.PeriodoId));
+    }
+
+    [Fact]
+    public async Task Si_no_se_confirma_no_lo_anade()
+    {
+        using var e = new EscenarioPeriodos();
+        var p = await e.Servicio.CrearAsync(2026, 4, true);
+        var vm = new ClientesViewModel(e.ServicioClientes, new DialogosFalsos(false), e.Servicio);
+        await vm.AlEntrarAsync();
+
+        await vm.NuevoCommand.ExecuteAsync(null);
+        vm.Nombre = "Nuevo";
+        vm.Nif = "12345678Z";
+        vm.FechaAlta = new DateTime(2026, 11, 2);
+        await vm.GuardarPanelCommand.ExecuteAsync(null);
+
+        Assert.Null(vm.ErrorPanel);
+        Assert.Empty(await e.Filas(p.PeriodoId));
+    }
+
+    [Fact]
+    public async Task Al_reactivar_tambien_lo_propone()
+    {
+        using var e = new EscenarioPeriodos();
+        var ana = await e.Clientes.CrearFisica("Ana", "12345678Z", "2020-01-01", "303");
+        await e.ServicioClientes.DarDeBajaAsync(ana.Id, EscenarioClientes.F("2026-03-31"));
+        var p = await e.Servicio.CrearAsync(2026, 4, true);
+        Assert.Empty(await e.Filas(p.PeriodoId));
+        var vm = new ClientesViewModel(e.ServicioClientes, new DialogosFalsos(true), e.Servicio);
+        await vm.AlEntrarAsync();
+        vm.Seleccionado = vm.Clientes.Single();
+
+        await vm.ReactivarCommand.ExecuteAsync(null);
+        vm.FechaOperacion = new DateTime(2026, 11, 2);
+        await vm.GuardarPanelCommand.ExecuteAsync(null);
+
+        Assert.Single(await e.Filas(p.PeriodoId));
+    }
+}

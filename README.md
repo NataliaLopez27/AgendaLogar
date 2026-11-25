@@ -55,3 +55,4 @@ Los clientes con avisos llevan en sus notas lo que hay que revisar.
 - **Hito 0 — Arranque**: solución, base MVVM, inyección de dependencias, navegación, esquema EF Core y seed de modelos. ✔
 - **Hito 1 — Autenticación**: CU-01 inicio/cierre de sesión, roles y control de acceso, CU-02 cambiar contraseña, CU-10 gestión de empleados. ✔
 - **Hito 2 — Clientes**: CU-11 alta, CU-12 edición, CU-13 baja/reactivación, CU-14 modelos por cliente, RF-25 listado y búsqueda, RF-60 importación desde Excel. ✔
+- **Hito 3 — Periodos y asignaciones**: reglas de vigencia RN-01…RN-05, CU-15 crear periodo, RF-41 copiar asignaciones, CU-16 asignación individual y masiva, CU-17 cerrar y reabrir. ✔

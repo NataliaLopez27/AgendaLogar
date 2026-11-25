@@ -37,12 +37,14 @@ public partial class ClientesViewModel : ViewModelBase
 {
     private readonly ServicioClientes _clientes;
     private readonly IDialogos _dialogos;
+    private readonly ServicioPeriodos? _periodos;
     private CancellationTokenSource? _busqueda;
 
-    public ClientesViewModel(ServicioClientes clientes, IDialogos dialogos)
+    public ClientesViewModel(ServicioClientes clientes, IDialogos dialogos, ServicioPeriodos? periodos = null)
     {
         _clientes = clientes;
         _dialogos = dialogos;
+        _periodos = periodos;
     }
 
     public ObservableCollection<ClienteResumen> Clientes { get; } = new();
@@ -572,6 +574,7 @@ public partial class ClientesViewModel : ViewModelBase
 
         var creado = await _clientes.CrearAsync(new DatosCliente(Nombre, Nif, Tipo, Notas), DateOnly.FromDateTime(fecha), modelos);
         Aviso = $"Se ha dado de alta a {creado.Nombre}.";
+        await ProponerPeriodosAbiertosAsync(creado);
         return creado;
     }
 
@@ -604,7 +607,28 @@ public partial class ClientesViewModel : ViewModelBase
 
         var r = await _clientes.ReactivarAsync(id, fecha);
         Aviso = $"{r.Nombre} vuelve a estar de alta desde el {fecha:dd/MM/yyyy}.";
+        await ProponerPeriodosAbiertosAsync(r);
         return r;
+    }
+
+    /// <summary>
+    /// RN-04: si el cliente es vigente en periodos ya creados y abiertos en los que todavía no está,
+    /// propone añadirlo (pendiente y sin asignar; se asigna después en Periodos).
+    /// </summary>
+    private async Task ProponerPeriodosAbiertosAsync(ClienteResumen cliente)
+    {
+        if (_periodos is null) return;
+        var periodos = await _periodos.PeriodosAbiertosSinClienteAsync(cliente.Id);
+        if (periodos.Count == 0) return;
+
+        var nombres = string.Join(", ", periodos.Select(p => p.Nombre));
+        if (!_dialogos.Confirmar("Añadir a periodos abiertos",
+                $"{cliente.Nombre} está de alta en periodos que ya están creados y abiertos ({nombres}). " +
+                "¿Quieres añadirlo a esos periodos? Quedará pendiente y sin asignar; podrás asignarlo en Periodos."))
+            return;
+
+        await _periodos.AnadirClienteAPeriodosAsync(cliente.Id, periodos.Select(p => p.Id).ToList());
+        Aviso += $" Añadido a: {nombres}.";
     }
 
     /// <summary>Si otro cliente tiene el mismo NIF, avisa y pregunta si continuar (no es bloqueante).</summary>
