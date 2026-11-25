@@ -29,6 +29,9 @@
             <DataTemplate DataType="{x:Type vm:CambiarPasswordViewModel}">
                 <v:CambiarPasswordView />
             </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:PeriodosViewModel}">
+                <v:PeriodosView />
+            </DataTemplate>
             <DataTemplate DataType="{x:Type vm:ClientesViewModel}">
                 <v:ClientesView />
             </DataTemplate>
