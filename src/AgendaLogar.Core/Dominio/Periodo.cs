@@ -25,6 +25,9 @@ public class Periodo
         ? new DateOnly(Anio, t * 3, 1).AddMonths(1).AddDays(-1)
         : new DateOnly(Anio, 12, 31);
 
+    /// <summary>Periodo trimestral que contiene la fecha (sin guardar en la base de datos).</summary>
+    public static Periodo TrimestreDe(DateOnly fecha) => new() { Anio = fecha.Year, Trimestre = (byte)((fecha.Month - 1) / 3 + 1) };
+
     /// <summary>Nombre corto, por ejemplo "3T 2026" o "Anual 2026".</summary>
     public string Nombre => Trimestre is byte t ? $"{t}T {Anio}" : $"Anual {Anio}";
 }
