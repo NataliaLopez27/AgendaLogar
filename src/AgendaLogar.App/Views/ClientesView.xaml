@@ -28,34 +28,57 @@
         </c:CabeceraPagina>
 
         <!-- Filtros y avisos -->
-        <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Margin="0,18,0,12">
-            <DockPanel>
-                <TextBlock DockPanel.Dock="Right" Text="{Binding Recuento}" Foreground="{StaticResource Gris}"
-                           VerticalAlignment="Center" Margin="12,0,0,0" />
-                <CheckBox DockPanel.Dock="Right" Content="Mostrar bajas" IsChecked="{Binding MostrarBajas}"
-                          VerticalAlignment="Center" Margin="16,0,0,0" />
-                <ComboBox DockPanel.Dock="Right" Width="180" ItemsSource="{x:Static vm:ClientesViewModel.FiltrosTipo}" DisplayMemberPath="Texto"
-                          SelectedItem="{Binding FiltroSeleccionado}" Margin="12,0,0,0" />
-                <!-- Búsqueda con texto de ayuda -->
+        <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Margin="0,18,0,14">
+            <!-- RF-25: búsqueda y filtros -->
+            <Border Style="{StaticResource Tarjeta}" Padding="14">
                 <Grid>
-                    <TextBox x:Name="CajaBusqueda" Text="{Binding TextoBusqueda, UpdateSourceTrigger=PropertyChanged}" Padding="34,8,10,8" />
-                    <TextBlock Text="&#xE721;" FontFamily="{StaticResource FuenteIconos}" Foreground="{StaticResource Gris}"
-                               VerticalAlignment="Center" Margin="12,0,0,0" IsHitTestVisible="False" />
-                    <TextBlock Text="Buscar por nombre o NIF…" Foreground="{StaticResource Gris}" VerticalAlignment="Center"
-                               Margin="36,0,0,0" IsHitTestVisible="False">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="Visibility" Value="Collapsed" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Text, ElementName=CajaBusqueda}" Value="">
-                                        <Setter Property="Visibility" Value="Visible" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*" MinWidth="200" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Búsqueda con texto de ayuda -->
+                    <Grid>
+                        <TextBox x:Name="CajaBusqueda" Text="{Binding TextoBusqueda, UpdateSourceTrigger=PropertyChanged}" Padding="34,8,10,8" />
+                        <TextBlock Text="&#xE721;" FontFamily="{StaticResource FuenteIconos}" Foreground="{StaticResource Gris}"
+                                   VerticalAlignment="Center" Margin="12,0,0,0" IsHitTestVisible="False" />
+                        <TextBlock Text="Buscar por nombre o NIF…" Foreground="{StaticResource Gris}" VerticalAlignment="Center"
+                                   Margin="36,0,0,0" IsHitTestVisible="False">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Text, ElementName=CajaBusqueda}" Value="">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Grid>
+
+                    <ComboBox Grid.Column="1" Margin="10,0,0,0" ToolTip="Tipo de cliente"
+                              ItemsSource="{x:Static vm:ClientesViewModel.FiltrosTipo}" DisplayMemberPath="Texto"
+                              SelectedItem="{Binding FiltroSeleccionado}" />
+                    <ComboBox Grid.Column="2" Margin="10,0,0,0" ToolTip="Estado"
+                              ItemsSource="{x:Static vm:ClientesViewModel.FiltrosEstado}" DisplayMemberPath="Texto"
+                              SelectedItem="{Binding FiltroEstado}" />
+                    <ComboBox Grid.Column="3" Margin="10,0,0,0" ToolTip="Empleado habitual"
+                              ItemsSource="{Binding FiltrosEmpleado}" DisplayMemberPath="Texto"
+                              SelectedItem="{Binding FiltroEmpleado}" />
+
+                    <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0,4,0">
+                        <Button Content="Limpiar filtros" Command="{Binding LimpiarFiltrosCommand}" Style="{StaticResource BotonEnlace}"
+                                Visibility="{Binding HayFiltros, Converter={StaticResource BoolAVisibilidad}}" Margin="0,0,12,0" />
+                        <Border Style="{StaticResource Pastilla}" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding Recuento}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TurquesaOscuro}" />
+                        </Border>
+                    </StackPanel>
                 </Grid>
-            </DockPanel>
+            </Border>
 
             <Border Style="{StaticResource CajaError}"
                     Visibility="{Binding Error, Converter={StaticResource TextoAVisibilidad}}">
@@ -68,6 +91,9 @@
         </StackPanel>
 
         <!-- Listado -->
+        <TextBlock Grid.Row="2" Panel.ZIndex="1" HorizontalAlignment="Center" VerticalAlignment="Center"
+                   Text="No hay clientes que coincidan con la búsqueda." Foreground="{StaticResource Gris}" FontSize="14"
+                   Visibility="{Binding ListaVacia, Converter={StaticResource BoolAVisibilidad}}" IsHitTestVisible="False" />
         <Border Grid.Row="2" Style="{StaticResource Tarjeta}" Padding="0" ClipToBounds="True">
             <DataGrid x:Name="Tabla" ItemsSource="{Binding Clientes}" SelectedItem="{Binding Seleccionado}" BorderThickness="0">
                 <DataGrid.InputBindings>
@@ -77,7 +103,8 @@
                     <DataGridTextColumn Header="Nombre / razón social" Binding="{Binding Nombre}" Width="*" />
                     <DataGridTextColumn Header="NIF" Binding="{Binding Nif}" Width="110" />
                     <DataGridTextColumn Header="Tipo" Binding="{Binding TipoTexto}" Width="130" />
-                    <DataGridTextColumn Header="Modelos" Binding="{Binding Modelos}" Width="200" />
+                    <DataGridTextColumn Header="Modelos" Binding="{Binding Modelos}" Width="180" />
+                    <DataGridTextColumn Header="Empleado habitual" Binding="{Binding EmpleadoHabitual}" Width="140" />
                     <DataGridTemplateColumn Header="Estado" Width="140">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
