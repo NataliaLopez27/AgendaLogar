@@ -64,6 +64,9 @@
 
                         <StackPanel Visibility="{Binding EsAdmin, Converter={StaticResource BoolAVisibilidad}}">
                             <TextBlock Text="ADMINISTRACIÓN" FontSize="11" FontWeight="SemiBold" Foreground="#8CFFFFFF" Margin="16,22,0,8" />
+                            <RadioButton Content="Periodos" Tag="&#xE787;" Style="{StaticResource OpcionMenu}" GroupName="Menu"
+                                         Command="{Binding IrAPeriodosCommand}"
+                                         IsChecked="{Binding SeccionActual, Mode=OneWay, Converter={StaticResource IgualA}, ConverterParameter=PeriodosViewModel}" />
                             <RadioButton Content="Clientes" Tag="&#xE77B;" Style="{StaticResource OpcionMenu}" GroupName="Menu"
                                          Command="{Binding IrAClientesCommand}"
                                          IsChecked="{Binding SeccionActual, Mode=OneWay, Converter={StaticResource IgualA}, ConverterParameter=ClientesViewModel}" />

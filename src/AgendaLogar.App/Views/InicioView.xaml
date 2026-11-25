@@ -42,6 +42,14 @@
                     </StackPanel>
                 </Button>
 
+                <Button Style="{StaticResource TarjetaAcceso}" Tag="&#xE787;" Command="{Binding IrAPeriodosCommand}"
+                        Visibility="{Binding EsAdmin, Converter={StaticResource BoolAVisibilidad}}">
+                    <StackPanel>
+                        <TextBlock Text="Periodos" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource Negro}" />
+                        <TextBlock Text="Crea trimestres y años, reparte los clientes y ciérralos." Style="{StaticResource Subtitulo}" FontSize="13" Margin="0,4,0,0" />
+                    </StackPanel>
+                </Button>
+
                 <Button Style="{StaticResource TarjetaAcceso}" Tag="&#xE77B;" Command="{Binding IrAClientesCommand}"
                         Visibility="{Binding EsAdmin, Converter={StaticResource BoolAVisibilidad}}">
                     <StackPanel>
