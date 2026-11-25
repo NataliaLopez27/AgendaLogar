@@ -100,6 +100,7 @@
         <!-- Acciones sobre el seleccionado -->
         <StackPanel x:Name="BarraAcciones" Grid.Row="3" Orientation="Horizontal" Margin="0,16,0,0">
             <Button Content="Editar" Command="{Binding EditarCommand}" Style="{StaticResource BotonSecundario}" Margin="0,0,10,0" />
+            <Button Content="Modelos" Command="{Binding GestionarModelosCommand}" Style="{StaticResource BotonSecundario}" Margin="0,0,10,0" />
             <Button Content="Reactivar" Command="{Binding ReactivarCommand}" Style="{StaticResource BotonSecundario}" Margin="0,0,10,0" />
             <Button Content="Dar de baja" Command="{Binding DarDeBajaCommand}" Style="{StaticResource BotonPeligro}" />
         </StackPanel>
@@ -118,8 +119,9 @@
                         <TextBlock Text="{Binding ErrorPanel}" Foreground="{StaticResource Error}" TextWrapping="Wrap" />
                     </Border>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
-                        <Button Content="Cancelar" Command="{Binding CancelarPanelCommand}" Style="{StaticResource BotonSecundario}" Margin="0,0,10,0" />
-                        <Button Content="Guardar" Command="{Binding GuardarPanelCommand}" Style="{StaticResource BotonPrimario}" />
+                        <Button Content="{Binding TextoCancelar}" Command="{Binding CancelarPanelCommand}" Style="{StaticResource BotonSecundario}" Margin="0,0,10,0" />
+                        <Button Content="Guardar" Command="{Binding GuardarPanelCommand}" Style="{StaticResource BotonPrimario}"
+                                Visibility="{Binding MostrarGuardar, Converter={StaticResource BoolAVisibilidad}}" />
                     </StackPanel>
                 </StackPanel>
 
@@ -188,6 +190,105 @@
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
+                        </StackPanel>
+
+                        <!-- Modelos del cliente (CU-14) -->
+                        <StackPanel Visibility="{Binding EsModelos, Converter={StaticResource BoolAVisibilidad}}">
+                            <TextBlock Text="{Binding NombreSeleccionado}" FontSize="15" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TurquesaOscuro}" Margin="0,6,0,12" TextWrapping="Wrap" />
+
+                            <TextBlock Text="Selecciona un modelo para darlo de baja o cambiar sus notas."
+                                       FontSize="12" Foreground="{StaticResource Gris}" TextWrapping="Wrap" Margin="0,0,0,8" />
+                            <ListBox ItemsSource="{Binding ModelosCliente}" SelectedItem="{Binding TramoSeleccionado}"
+                                     BorderThickness="0" Background="Transparent" MaxHeight="260"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                <ListBox.ItemContainerStyle>
+                                    <Style TargetType="ListBoxItem">
+                                        <Setter Property="Padding" Value="0" />
+                                        <Setter Property="Margin" Value="0,0,0,4" />
+                                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="ListBoxItem">
+                                                    <Border x:Name="Fondo" CornerRadius="8" Padding="10,7" Background="{StaticResource Fondo}"
+                                                            BorderThickness="1" BorderBrush="Transparent">
+                                                        <ContentPresenter />
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="Fondo" Property="BorderBrush" Value="{StaticResource GrisLinea}" />
+                                                        </Trigger>
+                                                        <Trigger Property="IsSelected" Value="True">
+                                                            <Setter TargetName="Fondo" Property="Background" Value="{StaticResource TurquesaClaro}" />
+                                                            <Setter TargetName="Fondo" Property="BorderBrush" Value="{StaticResource Turquesa}" />
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <DockPanel>
+                                            <TextBlock x:Name="Estado" DockPanel.Dock="Right" Text="{Binding EstadoTexto}" FontSize="12"
+                                                       Foreground="{StaticResource Exito}" VerticalAlignment="Center" />
+                                            <StackPanel>
+                                                <TextBlock>
+                                                    <Run Text="{Binding Codigo, Mode=OneWay}" FontWeight="SemiBold" />
+                                                    <Run Text="{Binding Descripcion, Mode=OneWay}" Foreground="{StaticResource Gris}" FontSize="11" />
+                                                </TextBlock>
+                                                <TextBlock FontSize="11" Foreground="{StaticResource Gris}">
+                                                    <Run Text="Alta " /><Run Text="{Binding FechaAlta, Mode=OneWay, StringFormat=dd/MM/yyyy}" />
+                                                </TextBlock>
+                                                <TextBlock Text="{Binding Notas}" FontSize="11" FontStyle="Italic" Foreground="{StaticResource TurquesaOscuro}"
+                                                           TextWrapping="Wrap" Visibility="{Binding Notas, Converter={StaticResource TextoAVisibilidad}}" />
+                                            </StackPanel>
+                                        </DockPanel>
+                                        <DataTemplate.Triggers>
+                                            <DataTrigger Binding="{Binding Vigente}" Value="False">
+                                                <Setter TargetName="Estado" Property="Foreground" Value="{StaticResource Gris}" />
+                                            </DataTrigger>
+                                        </DataTemplate.Triggers>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+
+                            <!-- Acciones sobre el modelo seleccionado -->
+                            <Border Background="{StaticResource Fondo}" CornerRadius="10" Padding="14" Margin="0,12,0,0"
+                                    Visibility="{Binding HayTramoSeleccionado, Converter={StaticResource BoolAVisibilidad}}">
+                                <StackPanel>
+                                    <TextBlock Text="Fecha de baja del modelo" Style="{StaticResource Etiqueta}" Margin="0,0,0,6" />
+                                    <DockPanel>
+                                        <Button DockPanel.Dock="Right" Content="Dar de baja" Command="{Binding DarDeBajaModeloCommand}"
+                                                Style="{StaticResource BotonPeligro}" Padding="12,8" Margin="8,0,0,0" />
+                                        <DatePicker SelectedDate="{Binding FechaBajaModelo}" FontSize="14" />
+                                    </DockPanel>
+                                    <TextBlock Text="Notas del modelo" Style="{StaticResource Etiqueta}" />
+                                    <TextBox Text="{Binding NotasModelo, UpdateSourceTrigger=PropertyChanged}" TextWrapping="Wrap" />
+                                    <Button Content="Guardar notas" Command="{Binding GuardarNotasModeloCommand}"
+                                            Style="{StaticResource BotonSecundario}" Padding="12,8" HorizontalAlignment="Right" Margin="0,8,0,0" />
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Añadir modelo -->
+                            <TextBlock Text="Añadir modelo" Style="{StaticResource Etiqueta}" Margin="0,20,0,6" />
+                            <ComboBox ItemsSource="{Binding ModelosParaAnadir}" SelectedItem="{Binding ModeloAnadir}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock>
+                                            <Run Text="{Binding Codigo, Mode=OneWay}" FontWeight="SemiBold" />
+                                            <Run Text="·" Foreground="{StaticResource Gris}" />
+                                            <Run Text="{Binding Descripcion, Mode=OneWay}" />
+                                        </TextBlock>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                            <DockPanel Margin="0,8,0,0">
+                                <Button DockPanel.Dock="Right" Content="Añadir" Command="{Binding AnadirModeloCommand}"
+                                        Style="{StaticResource BotonPrimario}" Padding="16,8" Margin="8,0,0,0" />
+                                <DatePicker SelectedDate="{Binding FechaAltaModelo}" FontSize="14" />
+                            </DockPanel>
                         </StackPanel>
 
                         <!-- Modelos (solo en el alta) -->
