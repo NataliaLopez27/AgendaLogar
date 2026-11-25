@@ -32,6 +32,9 @@ public partial class InicioViewModel : ViewModelBase
     private void IrACambiarPassword() => _navegacion.NavegarA<CambiarPasswordViewModel>();
 
     [RelayCommand]
+    private void IrAClientes() => _navegacion.NavegarA<ClientesViewModel>();
+
+    [RelayCommand]
     private void IrAEmpleados() => _navegacion.NavegarA<EmpleadosViewModel>();
 
     [RelayCommand]

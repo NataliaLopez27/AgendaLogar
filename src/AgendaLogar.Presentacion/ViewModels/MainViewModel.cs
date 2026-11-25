@@ -48,6 +48,9 @@ public partial class MainViewModel : ObservableObject
     private void IrACatalogoModelos() => _navegacion.NavegarA<CatalogoModelosViewModel>();
 
     [RelayCommand(CanExecute = nameof(EsAdmin))]
+    private void IrAClientes() => _navegacion.NavegarA<ClientesViewModel>();
+
+    [RelayCommand(CanExecute = nameof(EsAdmin))]
     private void IrAEmpleados() => _navegacion.NavegarA<EmpleadosViewModel>();
 
     [RelayCommand]
@@ -70,6 +73,7 @@ public partial class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(EsAdmin));
         IrACatalogoModelosCommand.NotifyCanExecuteChanged();
         IrAEmpleadosCommand.NotifyCanExecuteChanged();
+        IrAClientesCommand.NotifyCanExecuteChanged();
     }
 
     private static string ObtenerIniciales(string? nombre)

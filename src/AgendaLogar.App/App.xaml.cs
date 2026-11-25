@@ -42,6 +42,7 @@ public partial class App : Application
         servicios.AddSingleton<ControlAcceso>();
         servicios.AddSingleton<ServicioAutenticacion>();
         servicios.AddSingleton<ServicioUsuarios>();
+        servicios.AddSingleton<ServicioClientes>();
 
         // Navegación
         servicios.AddSingleton<INavegacionService, NavegacionService>();
@@ -54,6 +55,7 @@ public partial class App : Application
         servicios.AddTransient<LoginViewModel>();
         servicios.AddTransient<InicioViewModel>();
         servicios.AddTransient<CambiarPasswordViewModel>();
+        servicios.AddTransient<ClientesViewModel>();
         servicios.AddTransient<EmpleadosViewModel>();
         servicios.AddTransient<CatalogoModelosViewModel>();
         servicios.AddSingleton<MainWindow>();

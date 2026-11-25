@@ -42,6 +42,14 @@
                     </StackPanel>
                 </Button>
 
+                <Button Style="{StaticResource TarjetaAcceso}" Tag="&#xE77B;" Command="{Binding IrAClientesCommand}"
+                        Visibility="{Binding EsAdmin, Converter={StaticResource BoolAVisibilidad}}">
+                    <StackPanel>
+                        <TextBlock Text="Clientes" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource Negro}" />
+                        <TextBlock Text="Altas, datos, modelos y bajas de clientes." Style="{StaticResource Subtitulo}" FontSize="13" Margin="0,4,0,0" />
+                    </StackPanel>
+                </Button>
+
                 <Button Style="{StaticResource TarjetaAcceso}" Tag="&#xE716;" Command="{Binding IrAEmpleadosCommand}"
                         Visibility="{Binding EsAdmin, Converter={StaticResource BoolAVisibilidad}}">
                     <StackPanel>
