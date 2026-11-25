@@ -14,11 +14,22 @@ public enum ModoPanelCliente
     Alta,
     Edicion,
     Baja,
-    Reactivacion
+    Reactivacion,
+    Modelos
 }
 
 /// <summary>Opción de los desplegables de tipo de cliente. Valor nulo = todos.</summary>
 public sealed record OpcionTipo(TipoCliente? Valor, string Texto);
+
+/// <summary>Opción del filtro de estado.</summary>
+public sealed record OpcionEstado(FiltroEstadoCliente Valor, string Texto);
+
+/// <summary>Opción del filtro de empleado habitual: todos, sin asignar o un empleado concreto.</summary>
+public sealed record OpcionEmpleado(int? Id, bool SinAsignar, string Texto)
+{
+    public static readonly OpcionEmpleado Todos = new(null, false, "Todos los empleados");
+    public static readonly OpcionEmpleado NingunoAsignado = new(null, true, ClienteResumen.SinAsignar);
+}
 
 /// <summary>Pantalla de clientes del administrador: listado, alta (CU-11), edición (CU-12) y baja/reactivación (CU-13).</summary>
 [SoloAdministrador]
@@ -43,6 +54,16 @@ public partial class ClientesViewModel : ViewModelBase
         new OpcionTipo(TipoCliente.Sociedad, "Sociedades")
     };
 
+    public static IReadOnlyList<OpcionEstado> FiltrosEstado { get; } = new[]
+    {
+        new OpcionEstado(FiltroEstadoCliente.Todos, "Todos los estados"),
+        new OpcionEstado(FiltroEstadoCliente.Activos, "Activos"),
+        new OpcionEstado(FiltroEstadoCliente.DeBaja, "De baja")
+    };
+
+    /// <summary>Opciones del filtro de empleado: "Todos", "Sin asignar" y cada empleado.</summary>
+    public ObservableCollection<OpcionEmpleado> FiltrosEmpleado { get; } = new() { OpcionEmpleado.Todos, OpcionEmpleado.NingunoAsignado };
+
     public IReadOnlyList<OpcionTipo> Tipos { get; } = new[]
     {
         new OpcionTipo(TipoCliente.Fisica, "Persona física"),
@@ -61,19 +82,55 @@ public partial class ClientesViewModel : ViewModelBase
     public TipoCliente? FiltroTipo => FiltroSeleccionado?.Valor;
 
     [ObservableProperty]
-    private bool _mostrarBajas = true;
+    private OpcionEstado _filtroEstado = FiltrosEstado[0];
+
+    [ObservableProperty]
+    private OpcionEmpleado _filtroEmpleado = OpcionEmpleado.Todos;
+
+    /// <summary>Filtro completo que se envía al servicio (RF-25).</summary>
+    public FiltroClientes Filtro => new(
+        TextoBusqueda,
+        FiltroTipo,
+        FiltroEstado?.Valor ?? FiltroEstadoCliente.Todos,
+        FiltroEmpleado?.Id,
+        FiltroEmpleado?.SinAsignar == true);
+
+    public bool HayFiltros => !string.IsNullOrWhiteSpace(TextoBusqueda) || FiltroTipo is not null
+        || FiltroEstado?.Valor is not (null or FiltroEstadoCliente.Todos) || FiltroEmpleado != OpcionEmpleado.Todos;
+
+    [RelayCommand]
+    private void LimpiarFiltros()
+    {
+        _limpiando = true;
+        TextoBusqueda = string.Empty;
+        FiltroSeleccionado = FiltrosTipo[0];
+        FiltroEstado = FiltrosEstado[0];
+        FiltroEmpleado = OpcionEmpleado.Todos;
+        _limpiando = false;
+        _ = CargarAsync();
+    }
+
+    private bool _limpiando;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HaySeleccion))]
-    [NotifyCanExecuteChangedFor(nameof(EditarCommand), nameof(DarDeBajaCommand), nameof(ReactivarCommand))]
+    [NotifyCanExecuteChangedFor(nameof(EditarCommand), nameof(DarDeBajaCommand), nameof(ReactivarCommand), nameof(GestionarModelosCommand))]
     private ClienteResumen? _seleccionado;
 
     /// <summary>Historial de altas y bajas del cliente seleccionado (CU-13).</summary>
     public ObservableCollection<TramoAlta> Historial { get; } = new();
 
+    /// <summary>
+    /// Mientras se recarga el listado, la tabla deselecciona y vuelve a seleccionar la fila:
+    /// eso no debe cerrar el panel abierto.
+    /// </summary>
+    private bool _recargando;
+
     partial void OnSeleccionadoChanged(ClienteResumen? value)
     {
-        if (Modo is ModoPanelCliente.Baja or ModoPanelCliente.Reactivacion)
+        if (_recargando) return;
+        if (Modo is ModoPanelCliente.Baja or ModoPanelCliente.Reactivacion or ModoPanelCliente.Modelos
+            && value?.Id != _idEditando)
             Modo = ModoPanelCliente.Ninguno;
     }
 
@@ -89,11 +146,38 @@ public partial class ClientesViewModel : ViewModelBase
 
     public string Recuento => Clientes.Count == 1 ? "1 cliente" : $"{Clientes.Count} clientes";
 
-    partial void OnTextoBusquedaChanged(string value) => _ = BuscarConRetrasoAsync();
-    partial void OnFiltroSeleccionadoChanged(OpcionTipo value) => _ = CargarAsync();
-    partial void OnMostrarBajasChanged(bool value) => _ = CargarAsync();
+    /// <summary>Mensaje cuando la lista está vacía.</summary>
+    public bool ListaVacia => Clientes.Count == 0;
 
-    public override Task AlEntrarAsync() => CargarAsync();
+    partial void OnTextoBusquedaChanged(string value)
+    {
+        if (!_limpiando) _ = BuscarConRetrasoAsync();
+    }
+
+    partial void OnFiltroSeleccionadoChanged(OpcionTipo value)
+    {
+        if (!_limpiando) _ = CargarAsync();
+    }
+
+    partial void OnFiltroEstadoChanged(OpcionEstado value)
+    {
+        if (!_limpiando) _ = CargarAsync();
+    }
+
+    partial void OnFiltroEmpleadoChanged(OpcionEmpleado value)
+    {
+        if (!_limpiando && value is not null) _ = CargarAsync();
+    }
+
+    public override async Task AlEntrarAsync()
+    {
+        await Ejecutar(async () =>
+        {
+            foreach (var e in await _clientes.EmpleadosParaFiltroAsync())
+                FiltrosEmpleado.Add(new OpcionEmpleado(e.Id, false, e.Nombre));
+        });
+        await CargarAsync();
+    }
 
     /// <summary>Espera un momento mientras se escribe para no consultar en cada tecla.</summary>
     private async Task BuscarConRetrasoAsync()
@@ -116,12 +200,22 @@ public partial class ClientesViewModel : ViewModelBase
         var idSeleccionado = Seleccionado?.Id;
         await Ejecutar(async () =>
         {
-            var lista = await _clientes.ListarAsync(TextoBusqueda, FiltroTipo, MostrarBajas);
-            Clientes.Clear();
-            foreach (var c in lista)
-                Clientes.Add(c);
-            Seleccionado = Clientes.FirstOrDefault(c => c.Id == idSeleccionado);
+            var lista = await _clientes.ListarAsync(Filtro);
+            _recargando = true;
+            try
+            {
+                Clientes.Clear();
+                foreach (var c in lista)
+                    Clientes.Add(c);
+                Seleccionado = Clientes.FirstOrDefault(c => c.Id == idSeleccionado);
+            }
+            finally
+            {
+                _recargando = false;
+            }
             OnPropertyChanged(nameof(Recuento));
+            OnPropertyChanged(nameof(HayFiltros));
+            OnPropertyChanged(nameof(ListaVacia));
         });
     }
 
@@ -129,10 +223,50 @@ public partial class ClientesViewModel : ViewModelBase
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(PanelVisible), nameof(TituloPanel), nameof(EsAlta), nameof(MostrarFormularioDatos),
-        nameof(MostrarBajaReactivacion), nameof(EtiquetaFecha), nameof(Explicacion))]
+        nameof(MostrarBajaReactivacion), nameof(EtiquetaFecha), nameof(Explicacion), nameof(EsModelos),
+        nameof(MostrarGuardar), nameof(TextoCancelar))]
     private ModoPanelCliente _modo;
 
     public bool MostrarBajaReactivacion => Modo is ModoPanelCliente.Baja or ModoPanelCliente.Reactivacion;
+
+    // ---- Modelos del cliente (CU-14) ----
+
+    public bool EsModelos => Modo == ModoPanelCliente.Modelos;
+
+    /// <summary>En el panel de modelos cada acción se guarda al momento, así que no hay botón "Guardar".</summary>
+    public bool MostrarGuardar => Modo != ModoPanelCliente.Modelos;
+    public string TextoCancelar => Modo == ModoPanelCliente.Modelos ? "Cerrar" : "Cancelar";
+
+    public ObservableCollection<TramoModelo> ModelosCliente { get; } = new();
+
+    /// <summary>Modelos del catálogo que aplican al tipo del cliente, para añadir.</summary>
+    public ObservableCollection<Modelo> ModelosParaAnadir { get; } = new();
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(DarDeBajaModeloCommand), nameof(GuardarNotasModeloCommand))]
+    [NotifyPropertyChangedFor(nameof(HayTramoSeleccionado))]
+    private TramoModelo? _tramoSeleccionado;
+
+    public bool HayTramoSeleccionado => TramoSeleccionado is not null;
+
+    partial void OnTramoSeleccionadoChanged(TramoModelo? value)
+    {
+        NotasModelo = value?.Notas ?? string.Empty;
+        FechaBajaModelo = DateTime.Today;
+    }
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(AnadirModeloCommand))]
+    private Modelo? _modeloAnadir;
+
+    [ObservableProperty]
+    private DateTime? _fechaAltaModelo = DateTime.Today;
+
+    [ObservableProperty]
+    private DateTime? _fechaBajaModelo = DateTime.Today;
+
+    [ObservableProperty]
+    private string _notasModelo = string.Empty;
 
     // ---- Baja y reactivación (CU-13) ----
 
@@ -170,6 +304,7 @@ public partial class ClientesViewModel : ViewModelBase
         ModoPanelCliente.Edicion => "Editar cliente",
         ModoPanelCliente.Baja => "Dar de baja",
         ModoPanelCliente.Reactivacion => "Reactivar cliente",
+        ModoPanelCliente.Modelos => "Modelos del cliente",
         _ => string.Empty
     };
 
@@ -273,6 +408,96 @@ public partial class ClientesViewModel : ViewModelBase
             Modo = modo;
             OnPropertyChanged(nameof(NombreSeleccionado));
         });
+    }
+
+    [RelayCommand(CanExecute = nameof(HaySeleccion))]
+    private async Task GestionarModelosAsync()
+    {
+        if (Seleccionado is not { } c) return;
+        await Ejecutar(async () =>
+        {
+            _idEditando = c.Id;
+            var aplicables = await _clientes.ModelosParaAsync(c.Tipo);
+            ModelosParaAnadir.Clear();
+            foreach (var m in aplicables)
+                ModelosParaAnadir.Add(m);
+            ModeloAnadir = null;
+            FechaAltaModelo = DateTime.Today;
+            await RecargarModelosClienteAsync();
+            ErrorPanel = null;
+            Modo = ModoPanelCliente.Modelos;
+            OnPropertyChanged(nameof(NombreSeleccionado));
+        });
+    }
+
+    private async Task RecargarModelosClienteAsync(int? seleccionarId = null)
+    {
+        if (_idEditando is not int id) return;
+        var tramos = await _clientes.ModelosDeClienteAsync(id);
+        ModelosCliente.Clear();
+        foreach (var t in tramos)
+            ModelosCliente.Add(t);
+        TramoSeleccionado = ModelosCliente.FirstOrDefault(t => t.Id == seleccionarId);
+    }
+
+    private bool PuedeAnadirModelo() => ModeloAnadir is not null;
+
+    [RelayCommand(CanExecute = nameof(PuedeAnadirModelo))]
+    private Task AnadirModeloAsync() => EjecutarEnPanel(async () =>
+    {
+        if (_idEditando is not int id || ModeloAnadir is not { } m) return;
+        if (FechaAltaModelo is not DateTime f)
+            throw new ReglaNegocioException("Indica la fecha de alta del modelo.");
+        var tramo = await _clientes.AnadirModeloAsync(id, m.Codigo, DateOnly.FromDateTime(f));
+        Aviso = $"Modelo {m.Codigo} añadido desde el {tramo.FechaAlta:dd/MM/yyyy}.";
+        ModeloAnadir = null;
+        await RecargarModelosClienteAsync(tramo.Id);
+    });
+
+    private bool PuedeDarDeBajaModelo() => TramoSeleccionado is { Vigente: true };
+
+    [RelayCommand(CanExecute = nameof(PuedeDarDeBajaModelo))]
+    private Task DarDeBajaModeloAsync() => EjecutarEnPanel(async () =>
+    {
+        if (TramoSeleccionado is not { } t) return;
+        if (FechaBajaModelo is not DateTime f)
+            throw new ReglaNegocioException("Indica la fecha de baja del modelo.");
+        await _clientes.DarDeBajaModeloAsync(t.Id, DateOnly.FromDateTime(f));
+        Aviso = $"Modelo {t.Codigo} de baja desde el {f:dd/MM/yyyy}.";
+        await RecargarModelosClienteAsync(t.Id);
+    });
+
+    [RelayCommand(CanExecute = nameof(HayTramoSeleccionado))]
+    private Task GuardarNotasModeloAsync() => EjecutarEnPanel(async () =>
+    {
+        if (TramoSeleccionado is not { } t) return;
+        await _clientes.CambiarNotasModeloAsync(t.Id, NotasModelo);
+        Aviso = $"Notas del modelo {t.Codigo} guardadas.";
+        await RecargarModelosClienteAsync(t.Id);
+    });
+
+    /// <summary>Ejecuta una acción del panel de modelos y refresca el listado (columna "Modelos").</summary>
+    private async Task EjecutarEnPanel(Func<Task> accion)
+    {
+        ErrorPanel = null;
+        Ocupado = true;
+        try
+        {
+            await accion();
+            await CargarAsync();
+        }
+        catch (Exception ex) when (ex is ReglaNegocioException or AccesoDenegadoException)
+        {
+            ErrorPanel = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            ErrorPanel = $"No se ha podido guardar: {ex.GetBaseException().Message}";
+        }
+        finally
+        {
+            Ocupado = false;
+        }
     }
 
     [RelayCommand]
