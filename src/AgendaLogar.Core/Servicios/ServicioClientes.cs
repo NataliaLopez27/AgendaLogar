@@ -130,6 +130,53 @@ public class ServicioClientes
         return Resumen(cliente);
     }
 
+    /// <summary>Datos básicos de un cliente, para rellenar el formulario de edición.</summary>
+    public async Task<DatosCliente> ObtenerDatosAsync(int id, CancellationToken ct = default)
+    {
+        await using var db = await _fabrica.CreateDbContextAsync(ct);
+        await _acceso.RequerirAdminAsync(db, ct);
+        var c = await db.Clientes.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, ct)
+            ?? throw new ReglaNegocioException("El cliente no existe.");
+        return new DatosCliente(c.Nombre, c.Nif, c.Tipo, c.Notas);
+    }
+
+    /// <summary>
+    /// CU-12: modifica nombre, NIF, tipo y notas. Las fechas de alta y baja se gestionan en CU-13.
+    /// No deja cambiar el tipo si el cliente lleva modelos (sin baja) que no aplican al nuevo tipo.
+    /// </summary>
+    public async Task<ClienteResumen> EditarAsync(int id, DatosCliente datos, CancellationToken ct = default)
+    {
+        await using var db = await _fabrica.CreateDbContextAsync(ct);
+        await _acceso.RequerirAdminAsync(db, ct);
+
+        var cliente = await db.Clientes.Include(c => c.Altas).Include(c => c.Modelos).ThenInclude(m => m.Modelo)
+            .SingleOrDefaultAsync(c => c.Id == id, ct)
+            ?? throw new ReglaNegocioException("El cliente no existe.");
+        var (nombre, nif, notas) = Validar(datos);
+
+        if (datos.Tipo != cliente.Tipo)
+        {
+            var incompatibles = cliente.Modelos
+                .Where(m => m.FechaBaja is null)
+                .Where(m => !(datos.Tipo == TipoCliente.Fisica ? m.Modelo.AplicaFisica : m.Modelo.AplicaSociedad))
+                .Select(m => m.ModeloCodigo)
+                .Distinct()
+                .OrderBy(c => c)
+                .ToList();
+            if (incompatibles.Count > 0)
+                throw new ReglaNegocioException(
+                    $"No se puede cambiar a {TipoTexto(datos.Tipo)}: lleva modelos que no aplican ({string.Join(", ", incompatibles)}). " +
+                    "Dalos de baja antes en sus modelos.");
+        }
+
+        cliente.Nombre = nombre;
+        cliente.Nif = nif;
+        cliente.Tipo = datos.Tipo;
+        cliente.Notas = notas;
+        await db.SaveChangesAsync(ct);
+        return Resumen(cliente);
+    }
+
     private static (string nombre, string nif, string? notas) Validar(DatosCliente datos)
     {
         var nombre = datos.Nombre?.Trim() ?? string.Empty;
